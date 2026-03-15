@@ -21,6 +21,9 @@ include_directories(include)
 
 set(SOURCES
         src/OniForgeApp.cpp
+        src/component/xml/XmlDocument.cpp
+        src/component/xml/XmlReader.cpp
+        src/component/xml/XmlWriter.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
