@@ -27,14 +27,14 @@ public:
      * @param filePath Absolute or relative path to the TRAC XML file.
      * @return The parsed TRAC struct, or std::nullopt if reading or parsing failed.
      */
-    [[nodiscard]] std::optional<OniFile<TRAC>> load(const std::string& filePath) const;
+    [[nodiscard]] std::optional<OniFile<TRAC::Root>> load(const std::string& filePath) const;
 
     /**
      * @brief Writes an TRAC file to disk using the path stored in the OniFile wrapper.
      * @param file The TRAC data and its associated file path.
      * @return True if the file was written successfully, false otherwise.
      */
-    [[nodiscard]] bool save(const OniFile<TRAC>& file) const;
+    [[nodiscard]] bool save(const OniFile<TRAC::Root>& file) const;
 
 private:
     const XmlReader& m_reader;
@@ -46,12 +46,12 @@ private:
      * @param document A successfully loaded XmlDocument.
      * @return The parsed TRAC struct, or std::nullopt if the structure is unexpected.
      */
-    [[nodiscard]] std::optional<TRAC> parseDocument(const XmlDocument& document) const;
+    [[nodiscard]] std::optional<TRAC::Root> parseDocument(const XmlDocument& document) const;
 
     /**
      * @brief Serializes a TRAC struct into a new XmlDocument.
      * @param trac The TRAC struct to serialize.
      * @return A populated XmlDocument ready to be written to disk.
      */
-    [[nodiscard]] static XmlDocument buildDocument(const TRAC& trac);
+    [[nodiscard]] static XmlDocument buildDocument(const TRAC::Root& trac);
 };

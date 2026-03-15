@@ -10,7 +10,7 @@ TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer,
       , m_logger(logger) {
 }
 
-[[nodiscard]] std::optional<OniFile<TRAC>> TRACRepository::load(const std::string& filePath) const {
+[[nodiscard]] std::optional<OniFile<TRAC::Root>> TRACRepository::load(const std::string& filePath) const {
     XmlDocument document;
 
     if (!m_reader.read(filePath, document)) {
@@ -23,12 +23,12 @@ TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer,
     return OniFile{filePath, *trac};
 }
 
-bool TRACRepository::save(const OniFile<TRAC>& file) const {
+bool TRACRepository::save(const OniFile<TRAC::Root>& file) const {
     const XmlDocument document = buildDocument(file.data);
     return m_writer.write(document, file.path.string());
 }
 
-std::optional<TRAC> TRACRepository::parseDocument(const XmlDocument& document) const {
+std::optional<TRAC::Root> TRACRepository::parseDocument(const XmlDocument& document) const {
     const pugi::xml_node root = document.getRawDocument().child("Oni");
     if (!root) {
         m_logger.error("[TRACRepository] Missing <Oni> root node.");
@@ -41,12 +41,12 @@ std::optional<TRAC> TRACRepository::parseDocument(const XmlDocument& document) c
         return std::nullopt;
     }
 
-    TRAC trac;
+    TRAC::Root trac;
     trac.id = tracNode.attribute("id").as_int();
     trac.parentCollection = tracNode.child_value("ParentCollection");
 
     for (const pugi::xml_node& animNode: tracNode.child("Animations").children("TRACAnimation")) {
-        TRACAnimation animation;
+        TRAC::TRACAnimation animation;
         animation.weight = animNode.child("Weight").text().as_int();
         animation.animation = animNode.child_value("Animation");
         trac.animations.push_back(animation);
@@ -57,7 +57,7 @@ std::optional<TRAC> TRACRepository::parseDocument(const XmlDocument& document) c
     return trac;
 }
 
-XmlDocument TRACRepository::buildDocument(const TRAC& trac) {
+XmlDocument TRACRepository::buildDocument(const TRAC::Root& trac) {
     XmlDocument document;
     pugi::xml_document& doc = document.getRawDocument();
 

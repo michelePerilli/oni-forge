@@ -27,14 +27,14 @@ public:
      * @param filePath Absolute or relative path to the ONCV XML file.
      * @return The parsed ONCV struct, or std::nullopt if reading or parsing failed.
      */
-    [[nodiscard]] std::optional<OniFile<ONCV>> load(const std::string& filePath) const;
+    [[nodiscard]] std::optional<OniFile<ONCV::Root>> load(const std::string& filePath) const;
 
     /**
      * @brief Writes an ONCV file to disk using the path stored in the OniFile wrapper.
      * @param file The ONCV data and its associated file path.
      * @return True if the file was written successfully, false otherwise.
      */
-    [[nodiscard]] bool save(const OniFile<ONCV>& file) const;
+    [[nodiscard]] bool save(const OniFile<ONCV::Root>& file) const;
 
 private:
     const XmlReader& m_reader;
@@ -46,12 +46,12 @@ private:
      * @param document A successfully loaded XmlDocument.
      * @return The parsed ONCV struct, or std::nullopt if the structure is unexpected.
      */
-    [[nodiscard]] std::optional<ONCV> parseDocument(const XmlDocument& document) const;
+    [[nodiscard]] std::optional<ONCV::Root> parseDocument(const XmlDocument& document) const;
 
     /**
      * @brief Serializes an ONCV struct into a new XmlDocument.
      * @param oncv The ONCV struct to serialize.
      * @return A populated XmlDocument ready to be written to disk.
      */
-    [[nodiscard]] static XmlDocument buildDocument(const ONCV& oncv);
+    [[nodiscard]] static XmlDocument buildDocument(const ONCV::Root& oncv);
 };
