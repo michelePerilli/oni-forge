@@ -1,7 +1,6 @@
 #include "repository/TRACRepository.hpp"
 
 #include "component/logger/ILogger.hpp"
-#include "component/xml/XmlDocument.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
@@ -11,19 +10,22 @@ TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer,
       , m_logger(logger) {
 }
 
-[[nodiscard]] std::optional<TRAC> TRACRepository::load(const std::string& filePath) const {
+[[nodiscard]] std::optional<OniFile<TRAC>> TRACRepository::load(const std::string& filePath) const {
     XmlDocument document;
 
     if (!m_reader.read(filePath, document)) {
         return std::nullopt;
     }
 
-    return parseDocument(document);
+    auto trac = parseDocument(document);
+    if (!trac) return std::nullopt;
+
+    return OniFile{filePath, *trac};
 }
 
-bool TRACRepository::save(const TRAC& trac, const std::string& filePath) const {
-    const XmlDocument document = buildDocument(trac);
-    return m_writer.write(document, filePath);
+bool TRACRepository::save(const OniFile<TRAC>& file) const {
+    const XmlDocument document = buildDocument(file.data);
+    return m_writer.write(document, file.path.string());
 }
 
 std::optional<TRAC> TRACRepository::parseDocument(const XmlDocument& document) const {

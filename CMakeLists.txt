@@ -25,6 +25,7 @@ set(SOURCES
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
         src/component/xml/XmlWriter.cpp
+        src/repository/ONCVRepository.cpp
         src/repository/TRACRepository.cpp
 )
 

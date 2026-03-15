@@ -4,6 +4,7 @@
 #include <string>
 
 #include "component/xml/XmlDocument.hpp"
+#include "model/OniFile.hpp"
 #include "model/TRAC.hpp"
 
 // Forward declarations
@@ -26,15 +27,14 @@ public:
      * @param filePath Absolute or relative path to the TRAC XML file.
      * @return The parsed TRAC struct, or std::nullopt if reading or parsing failed.
      */
-    [[nodiscard]] std::optional<TRAC> load(const std::string& filePath) const;
+    [[nodiscard]] std::optional<OniFile<TRAC>> load(const std::string& filePath) const;
 
     /**
-     * @brief Writes a TRAC struct to disk.
-     * @param trac The TRAC struct to serialize.
-     * @param filePath Absolute or relative path to the destination file.
+     * @brief Writes an TRAC file to disk using the path stored in the OniFile wrapper.
+     * @param file The TRAC data and its associated file path.
      * @return True if the file was written successfully, false otherwise.
      */
-    [[nodiscard]] bool save(const TRAC& trac, const std::string& filePath) const;
+    [[nodiscard]] bool save(const OniFile<TRAC>& file) const;
 
 private:
     const XmlReader& m_reader;
