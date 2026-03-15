@@ -1,0 +1,14 @@
+# CMake build directories
+build/
+bin/
+out/
+
+# IDE specific
+.vscode/
+.idea/
+cmake-build-debug/
+cmake-build-release/
+
+# OS specific
+.DS_Store
+Thumbs.db
