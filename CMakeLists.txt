@@ -29,5 +29,7 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
 # Link the downloaded library to your executable
 target_link_libraries(${PROJECT_NAME} PRIVATE pugixml)

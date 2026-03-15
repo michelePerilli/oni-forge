@@ -22,7 +22,7 @@ public:
      * @param document An empty XmlDocument to be populated.
      * @return True if the file was read successfully, false otherwise.
      */
-    bool read(const std::string& filePath, XmlDocument& document) const;
+    [[nodiscard]] bool read(const std::string& filePath, XmlDocument& document) const;
 
 private:
     ILogger& m_logger;

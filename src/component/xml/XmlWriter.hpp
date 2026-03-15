@@ -22,7 +22,7 @@ public:
      * @param filePath Absolute or relative path to the destination file.
      * @return True if the file was written successfully, false otherwise.
      */
-    bool write(const XmlDocument& document, const std::string& filePath) const;
+    [[nodiscard]] bool write(const XmlDocument& document, const std::string& filePath) const;
 
 private:
     ILogger& m_logger;

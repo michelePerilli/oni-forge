@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ILogger.hpp"
+#include "component/logger/ILogger.hpp"
 #include <fstream>
 #include <string>
 
@@ -10,7 +10,7 @@
  * The log file path is provided at construction time.
  * Each message is prefixed with a timestamp and a severity level.
  */
-class Logger : public ILogger {
+class Logger final : public ILogger {
 public:
     /**
      * @brief Constructs a Logger that writes to the given file path.
@@ -45,5 +45,5 @@ private:
      * @brief Returns the current date and time as a formatted string.
      * @return e.g. "2025-03-15 14:32:01"
      */
-    static std::string currentTimestamp();
+    [[nodiscard]] static std::string currentTimestamp();
 };

@@ -1,6 +1,6 @@
-#include "XmlReader.hpp"
-#include "XmlDocument.hpp"
-#include "../logger/ILogger.hpp"
+#include "component/xml/XmlReader.hpp"
+#include "component/xml/XmlDocument.hpp"
+#include "component/logger/ILogger.hpp"
 
 XmlReader::XmlReader(ILogger& logger)
     : m_logger(logger) {}

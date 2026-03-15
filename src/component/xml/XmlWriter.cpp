@@ -1,6 +1,6 @@
-#include "XmlWriter.hpp"
-#include "XmlDocument.hpp"
-#include "../logger/ILogger.hpp"
+#include "component/xml/XmlWriter.hpp"
+#include "component/xml/XmlDocument.hpp"
+#include "component/logger/ILogger.hpp"
 
 XmlWriter::XmlWriter(ILogger& logger)
     : m_logger(logger) {}
