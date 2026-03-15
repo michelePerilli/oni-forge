@@ -32,6 +32,14 @@ public:
     [[nodiscard]] bool loadFromFile(const std::string& filePath);
 
     /**
+     * @brief Marks the document as loaded.
+     *
+     * Used when the document is built programmatically instead of
+     * being loaded from a file, so that XmlWriter can write it to disk.
+     */
+    void markAsLoaded();
+
+    /**
      * @brief Saves the current document to a file.
      *        Tag order is preserved as-is from the in-memory document.
      * @param filePath Absolute or relative path to the destination file.

@@ -18,12 +18,16 @@ bool XmlDocument::loadFromFile(const std::string& filePath) {
     return true;
 }
 
+void XmlDocument::markAsLoaded() {
+    m_loaded = true;
+}
+
 bool XmlDocument::saveToFile(const std::string& filePath) const {
     // pugi::format_raw avoids adding extra indentation or newlines,
     // preserving the original document structure as closely as possible
     const bool success = m_document.save_file(
         filePath.c_str(),
-        "  ", // indent string
+        "    ", // indent string
         pugi::format_default // change to format_raw if whitespace must be untouched
     );
 

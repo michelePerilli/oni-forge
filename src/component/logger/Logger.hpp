@@ -22,24 +22,30 @@ public:
 
     // Not copyable, not movable: owns a file stream
     Logger(const Logger&) = delete;
+
     Logger& operator=(const Logger&) = delete;
+
     Logger(Logger&&) = delete;
+
     Logger& operator=(Logger&&) = delete;
 
-    void info(const std::string& message) override;
-    void warning(const std::string& message) override;
-    void error(const std::string& message) override;
-    void separator() override;
+    void info(const std::string& message) const override;
+
+    void warning(const std::string& message) const override;
+
+    void error(const std::string& message) const override;
+
+    void separator() const override;
 
 private:
-    std::ofstream m_fileStream;
+    mutable std::ofstream m_fileStream;
 
     /**
      * @brief Writes a formatted log line to both console and file.
      * @param level Severity label (e.g. "INFO", "WARNING", "ERROR").
      * @param message The message to log.
      */
-    void writeLog(const std::string& level, const std::string& message);
+    void writeLog(const std::string& level, const std::string& message) const;
 
     /**
      * @brief Returns the current date and time as a formatted string.

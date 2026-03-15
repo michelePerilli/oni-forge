@@ -18,19 +18,19 @@ Logger::~Logger() {
     }
 }
 
-void Logger::info(const std::string& message) {
+void Logger::info(const std::string& message) const {
     writeLog("INFO", message);
 }
 
-void Logger::warning(const std::string& message) {
+void Logger::warning(const std::string& message) const {
     writeLog("WARNING", message);
 }
 
-void Logger::error(const std::string& message) {
+void Logger::error(const std::string& message) const {
     writeLog("ERROR", message);
 }
 
-void Logger::separator() {
+void Logger::separator() const {
     const std::string line = "------------------------------------------------------------";
     std::cout << line << "\n";
     if (m_fileStream.is_open()) {
@@ -38,7 +38,7 @@ void Logger::separator() {
     }
 }
 
-void Logger::writeLog(const std::string& level, const std::string& message) {
+void Logger::writeLog(const std::string& level, const std::string& message) const {
     const std::string line = std::format("[{}] [{}] {}", currentTimestamp(), level, message);
 
     std::cout << line << "\n";

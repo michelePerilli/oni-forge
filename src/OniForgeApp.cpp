@@ -1,7 +1,7 @@
 #include "component/logger/Logger.hpp"
-#include "component/xml/XmlDocument.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
+#include "repository/TRACRepository.hpp"
 
 int main() {
     Logger logger("oniforge.log");
@@ -9,21 +9,25 @@ int main() {
     logger.separator();
     logger.info("This is OniForge!");
 
-    XmlDocument document;
+    const XmlReader reader(logger);
+    const XmlWriter writer(logger);
+    const TRACRepository tracRepository(reader, writer, logger);
 
-    if (const XmlReader reader(logger); !reader.read(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)", document)) {
-        logger.error("Failed to read document.");
+    const auto trac = tracRepository.load(R"(D:\Dev\mods\oni\TCTFagent\TRACTCTFagent_animations.xml)");
+
+    if (!trac) {
+        logger.error("Failed to load TRAC.");
         return 1;
     }
 
-    logger.info("File read successfully.");
+    logger.info("Loaded TRAC with parent collection: " + trac->parentCollection);
 
-    if (const XmlWriter writer(logger); !writer.write(document, R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)")) {
-        logger.error("Failed to write document.");
+    if (!tracRepository.save(*trac, R"(D:\Dev\mods\oni\TCTFagent\TRACTCTFagent_animations.xml)")) {
+        logger.error("Failed to save TRAC.");
         return 1;
     }
 
-    logger.info("File written successfully.");
+    logger.info("TRAC saved successfully.");
 
     return 0;
 }
