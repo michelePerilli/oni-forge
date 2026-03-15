@@ -1,18 +1,21 @@
 #include "XmlWriter.hpp"
 #include "XmlDocument.hpp"
+#include "../logger/ILogger.hpp"
 
-#include <iostream>
+XmlWriter::XmlWriter(ILogger& logger)
+    : m_logger(logger) {}
 
-bool XmlWriter::write(const XmlDocument& document, const std::string& filePath) {
+bool XmlWriter::write(const XmlDocument& document, const std::string& filePath) const {
     if (!document.isLoaded()) {
-        std::cerr << "[XmlWriter] Cannot write an unloaded document to: " << filePath << "\n";
+        m_logger.error("[XmlWriter] Cannot write an unloaded document to: " + filePath);
         return false;
     }
 
     if (!document.saveToFile(filePath)) {
-        std::cerr << "[XmlWriter] Failed to write file: " << filePath << "\n";
+        m_logger.error("[XmlWriter] Failed to write file: " + filePath);
         return false;
     }
 
+    m_logger.info("[XmlWriter] File written successfully: " + filePath);
     return true;
 }

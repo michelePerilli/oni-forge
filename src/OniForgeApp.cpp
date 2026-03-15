@@ -1,26 +1,29 @@
-#include <iostream>
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlDocument.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
 int main() {
-    std::cout << "This is OniForge!" << std::endl;
+    Logger logger("oniforge.log");
+
+    logger.separator();
+    logger.info("This is OniForge!");
 
     XmlDocument document;
 
-    if (XmlReader reader; !reader.read(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)", document)) {
-        std::cerr << "Failed to read document." << std::endl;
+    if (const XmlReader reader(logger); !reader.read(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)", document)) {
+        logger.error("Failed to read document.");
         return 1;
     }
 
-    std::cout << "File read successfully." << std::endl;
+    logger.info("File read successfully.");
 
-    if (XmlWriter writer; !writer.write(document, R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)")) {
-        std::cerr << "Failed to write document." << std::endl;
+    if (const XmlWriter writer(logger); !writer.write(document, R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)")) {
+        logger.error("Failed to write document.");
         return 1;
     }
 
-    std::cout << "File written successfully." << std::endl;
+    logger.info("File written successfully.");
 
     return 0;
 }

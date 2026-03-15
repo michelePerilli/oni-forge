@@ -2,8 +2,9 @@
 
 #include <string>
 
-// Forward declaration to avoid including XmlDocument.hpp here
+// Forward declarations
 class XmlDocument;
+class ILogger;
 
 /**
  * @brief Responsible for writing an XmlDocument to disk.
@@ -13,7 +14,7 @@ class XmlDocument;
  */
 class XmlWriter {
 public:
-    XmlWriter() = default;
+    explicit XmlWriter(ILogger& logger);
 
     /**
      * @brief Writes the given document to disk, overwriting any existing file.
@@ -21,5 +22,8 @@ public:
      * @param filePath Absolute or relative path to the destination file.
      * @return True if the file was written successfully, false otherwise.
      */
-    bool write(const XmlDocument& document, const std::string& filePath);
+    bool write(const XmlDocument& document, const std::string& filePath) const;
+
+private:
+    ILogger& m_logger;
 };

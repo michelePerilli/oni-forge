@@ -2,8 +2,9 @@
 
 #include <string>
 
-// Forward declaration to avoid including XmlDocument.hpp here
+// Forward declarations
 class XmlDocument;
+class ILogger;
 
 /**
  * @brief Responsible for reading XML files from disk into an XmlDocument.
@@ -13,7 +14,7 @@ class XmlDocument;
  */
 class XmlReader {
 public:
-    XmlReader() = default;
+    explicit XmlReader(ILogger& logger);
 
     /**
      * @brief Reads an XML file from disk and populates the given document.
@@ -21,5 +22,8 @@ public:
      * @param document An empty XmlDocument to be populated.
      * @return True if the file was read successfully, false otherwise.
      */
-    bool read(const std::string& filePath, XmlDocument& document);
+    bool read(const std::string& filePath, XmlDocument& document) const;
+
+private:
+    ILogger& m_logger;
 };
