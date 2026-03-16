@@ -1,6 +1,4 @@
-#include "repository/ONCCRepository.hpp"
-#include "repository/ONCVRepository.hpp"
-#include "repository/TRACRepository.hpp"
+#include "repository/OniRepositoryRegistry.hpp"
 
 #include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
@@ -17,10 +15,15 @@ int main() {
     const ONCCRepository onccRepository(reader, writer, logger);
     const ONCVRepository oncvRepository(reader, writer, logger);
     const TRACRepository tracRepository(reader, writer, logger);
+    const OniRepositoryRegistry repos {
+        .oncc = onccRepository,
+        .oncv = oncvRepository,
+        .trac = tracRepository
+    };
 
-    const auto trac = tracRepository.load(R"(D:\Dev\mods\oni\TCTFagent\TRACTCTFagent_animations.xml)");
-    const auto oncv = oncvRepository.load(R"(D:\Dev\mods\oni\.data\xml\ONCV\ONCVninja_easy.xml)");
-    const auto oncc = onccRepository.load(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)");
+    const auto trac = repos.trac.load(R"(D:\Dev\mods\oni\TCTFagent\TRACTCTFagent_animations.xml)");
+    const auto oncv = repos.oncv.load(R"(D:\Dev\mods\oni\.data\xml\ONCV\ONCVninja_easy.xml)");
+    const auto oncc = repos.oncc.load(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)");
 
     if (!trac) {
         logger.error("Failed to load TRAC.");

@@ -20,7 +20,7 @@ class ILogger;
  */
 class ONCVRepository {
 public:
-    ONCVRepository(const XmlReader& reader, const XmlWriter& writer, ILogger& logger);
+    ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger);
 
     /**
      * @brief Reads an ONCV file from disk and returns the parsed struct.
@@ -39,7 +39,7 @@ public:
 private:
     const XmlReader& m_reader;
     const XmlWriter& m_writer;
-    ILogger& m_logger;
+    const ILogger& m_logger;
 
     /**
      * @brief Parses an ONCV struct from a loaded XmlDocument.

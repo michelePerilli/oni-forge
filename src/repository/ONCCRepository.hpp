@@ -21,7 +21,7 @@ class ILogger;
  */
 class ONCCRepository {
 public:
-    ONCCRepository(const XmlReader& reader, const XmlWriter& writer, ILogger& logger);
+    ONCCRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger);
 
     /**
      * @brief Reads an ONCC file from disk and returns the parsed struct.
@@ -40,7 +40,7 @@ public:
 private:
     const XmlReader& m_reader;
     const XmlWriter& m_writer;
-    ILogger&         m_logger;
+    const ILogger&         m_logger;
 
     [[nodiscard]] std::optional<ONCC::Root> parseDocument(const XmlDocument& document) const;
     [[nodiscard]] XmlDocument               buildDocument(const ONCC::Root& root) const;

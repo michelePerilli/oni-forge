@@ -4,7 +4,7 @@
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
-ONCVRepository::ONCVRepository(const XmlReader& reader, const XmlWriter& writer, ILogger& logger)
+ONCVRepository::ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
     : m_reader(reader)
       , m_writer(writer)
       , m_logger(logger) {
