@@ -28,6 +28,8 @@ set(SOURCES
         src/repository/ONCCRepository.cpp
         src/repository/ONCVRepository.cpp
         src/repository/TRACRepository.cpp
+        src/service/ProjectCatalogService.cpp
+        src/service/VanillaCatalogService.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

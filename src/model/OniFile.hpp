@@ -12,3 +12,10 @@ struct OniFile {
     std::filesystem::path path;
     T data;
 };
+
+namespace OniForge {
+    constexpr std::string_view xmlExtension  = ".xml";
+    constexpr std::string_view ONCCPrefix    = "ONCC";
+    constexpr std::string_view ONCVPrefix    = "ONCV";
+    constexpr std::string_view TRACPrefix    = "TRAC";
+}

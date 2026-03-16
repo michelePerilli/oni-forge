@@ -1,3 +1,5 @@
+#include <service/VanillaCatalogService.hpp>
+
 #include "repository/OniRepositoryRegistry.hpp"
 
 #include "component/logger/Logger.hpp"
@@ -20,38 +22,12 @@ int main() {
         .oncv = oncvRepository,
         .trac = tracRepository
     };
+    VanillaCatalogService vanilla(repos, logger);
+    vanilla.loadFromFolder(R"(D:\Dev\java\oniforge\vanilla\xml)");
 
-    const auto trac = repos.trac.load(R"(D:\Dev\mods\oni\TCTFagent\TRACTCTFagent_animations.xml)");
-    const auto oncv = repos.oncv.load(R"(D:\Dev\mods\oni\.data\xml\ONCV\ONCVninja_easy.xml)");
-    const auto oncc = repos.oncc.load(R"(D:\Dev\mods\oni\TCTFagent\ONCCTCTFagent.xml)");
-
-    if (!trac) {
-        logger.error("Failed to load TRAC.");
-        return 1;
-    }
-    if (!oncv) {
-        logger.error("Failed to load ONCV.");
-        return 1;
-    }
-    if (!oncc) {
-        logger.error("Failed to load ONCC.");
-        return 1;
-    }
-
-    if (!tracRepository.save(*trac)) {
-        logger.error("Failed to save TRAC.");
-        return 1;
-    }
-
-    if (!oncvRepository.save(*oncv)) {
-        logger.error("Failed to save ONCV.");
-        return 1;
-    }
-
-    if (!onccRepository.save(*oncc)) {
-        logger.error("Failed to save ONCC.");
-        return 1;
-    }
+    logger.info("Vanilla ONCC count: " + std::to_string(vanilla.getOnccFiles().size()));
+    logger.info("Vanilla ONCV count: " + std::to_string(vanilla.getOncvFiles().size()));
+    logger.info("Vanilla TRAC count: " + std::to_string(vanilla.getTracFiles().size()));
 
     return 0;
 }
