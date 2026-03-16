@@ -13,14 +13,41 @@ FetchContent_Declare(
         GIT_TAG        v1.14
 )
 
-# Download and provide the dependency
-FetchContent_MakeAvailable(pugixml)
+FetchContent_Declare(
+        SDL2
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG        release-2.28.5
+)
 
-# --- Project Configuration ---
-include_directories(include)
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG        v1.91.0
+)
 
+FetchContent_MakeAvailable(pugixml SDL2 imgui)
+
+# --- ImGui static library ---
+add_library(imgui_lib STATIC
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
+target_include_directories(imgui_lib PUBLIC
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
+)
+
+target_link_libraries(imgui_lib PUBLIC SDL2::SDL2)
+
+# --- Sources ---
 set(SOURCES
-        src/OniForgeApp.cpp
+        src/main.cpp
+        src/gui/OniForgeApp.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
@@ -33,8 +60,13 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-# Link the downloaded library to your executable
-target_link_libraries(${PROJECT_NAME} PRIVATE pugixml)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        pugixml
+        imgui_lib
+        SDL2::SDL2
+        opengl32
+)
