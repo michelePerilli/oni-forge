@@ -31,7 +31,7 @@ void Logger::error(const std::string& message) const {
 }
 
 void Logger::separator() const {
-    const std::string line = "------------------------------------------------------------";
+    const std::string line = "-----------------------------------------------------------------------------------------------------------------------";
     std::cout << line << "\n";
     if (m_fileStream.is_open()) {
         m_fileStream << line << "\n";

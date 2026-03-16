@@ -1,4 +1,5 @@
-#include <service/VanillaCatalogService.hpp>
+#include "service/VanillaCatalogService.hpp"
+#include "service/ProjectCatalogService.hpp"
 
 #include "repository/OniRepositoryRegistry.hpp"
 
@@ -17,7 +18,7 @@ int main() {
     const ONCCRepository onccRepository(reader, writer, logger);
     const ONCVRepository oncvRepository(reader, writer, logger);
     const TRACRepository tracRepository(reader, writer, logger);
-    const OniRepositoryRegistry repos {
+    const OniRepositoryRegistry repos{
         .oncc = onccRepository,
         .oncv = oncvRepository,
         .trac = tracRepository
@@ -25,9 +26,14 @@ int main() {
     VanillaCatalogService vanilla(repos, logger);
     vanilla.loadFromFolder(R"(D:\Dev\java\oniforge\vanilla\xml)");
 
-    logger.info("Vanilla ONCC count: " + std::to_string(vanilla.getOnccFiles().size()));
-    logger.info("Vanilla ONCV count: " + std::to_string(vanilla.getOncvFiles().size()));
-    logger.info("Vanilla TRAC count: " + std::to_string(vanilla.getTracFiles().size()));
+    ProjectCatalogService project(repos, vanilla, logger);
+    project.loadFromFolder(R"(D:\Dev\mods\oni\TCTFagent)");
 
+    logger.separator();
+    logger.info(std::format("  {:<10} | {:>6} | {:>6} | {:>6}", "Catalog", "ONCC", "ONCV", "TRAC"));
+    logger.info("  -----------|--------|--------|--------");
+    logger.info(std::format("  {:<10} | {:>6} | {:>6} | {:>6}", "Vanilla", vanilla.getOnccFiles().size(), vanilla.getOncvFiles().size(), vanilla.getTracFiles().size()));
+    logger.info(std::format("  {:<10} | {:>6} | {:>6} | {:>6}", "Project", project.getOnccFiles().size(), project.getOncvFiles().size(), project.getTracFiles().size()));
+    logger.separator();
     return 0;
 }

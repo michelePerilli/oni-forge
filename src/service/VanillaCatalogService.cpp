@@ -2,7 +2,7 @@
 #include "repository/OniRepositoryRegistry.hpp"
 #include "component/logger/ILogger.hpp"
 
-VanillaCatalogService::VanillaCatalogService(const OniRepositoryRegistry& repos, ILogger& logger)
+VanillaCatalogService::VanillaCatalogService(const OniRepositoryRegistry& repos, const ILogger& logger)
     : m_repos(repos)
     , m_logger(logger) {}
 

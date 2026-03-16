@@ -15,9 +15,9 @@ class ILogger;
  * Loads all supported file types from a vanilla folder.
  * Acts as the source of truth — nothing here is ever modified.
  */
-class VanillaCatalogService : public IOniCatalogService {
+class VanillaCatalogService final : public IOniCatalogService {
 public:
-    VanillaCatalogService(const OniRepositoryRegistry& repos, ILogger& logger);
+    VanillaCatalogService(const OniRepositoryRegistry& repos, const ILogger& logger);
 
     /**
      * @brief Loads all supported files from the given vanilla folder.
@@ -33,7 +33,7 @@ public:
 
 private:
     const OniRepositoryRegistry& m_repos;
-    ILogger& m_logger;
+    const ILogger& m_logger;
 
     std::vector<OniFile<ONCC::Root>> m_onccFiles;
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;

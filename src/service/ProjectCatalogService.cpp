@@ -3,7 +3,7 @@
 #include "repository/OniRepositoryRegistry.hpp"
 
 ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
-                                             const IOniCatalogService& vanilla,
+                                             IOniCatalogService& vanilla,
                                              const ILogger& logger)
     : m_repos(repos)
       , m_vanilla(vanilla)

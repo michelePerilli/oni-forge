@@ -15,10 +15,10 @@ class ILogger;
  * Loads and saves mod files. Depends on VanillaCatalogService
  * as a read-only reference for creating new entries from vanilla.
  */
-class ProjectCatalogService : public IOniCatalogService {
+class ProjectCatalogService final : public IOniCatalogService {
 public:
     ProjectCatalogService(const OniRepositoryRegistry& repos,
-                          const IOniCatalogService& vanilla,
+                          IOniCatalogService& vanilla,
                           const ILogger& logger);
 
     /**
