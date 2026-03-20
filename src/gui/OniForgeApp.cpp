@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include "fonts/InterRegularFont.hpp"
+#include "fonts/InterMediumFont.hpp"
 
 // ---------------------------------------------------------------------------
 // Constructor / Destructor
@@ -44,13 +46,11 @@ int OniForgeApp::run() {
 // ---------------------------------------------------------------------------
 
 bool OniForgeApp::init() {
-    // Load data
     m_logger.separator();
     m_vanilla.loadFromFolder(std::string(VANILLA_PATH));
     m_project.loadFromFolder(std::string(PROJECT_PATH));
     m_logger.separator();
 
-    // SDL2
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("[OniForgeApp] SDL_Init error: %s\n", SDL_GetError());
         return false;
@@ -85,15 +85,17 @@ bool OniForgeApp::init() {
     SDL_GL_MakeCurrent(m_window, m_glContext);
     SDL_GL_SetSwapInterval(1);
 
-    // ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    ImGui::StyleColorsDark();
+
+    applyTheme(m_currentTheme);
+
     ImGui_ImplSDL2_InitForOpenGL(m_window, m_glContext);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    loadFont(FONT_SIZES[m_currentFontIndex]);
     m_running = true;
     return true;
 }
@@ -119,6 +121,12 @@ void OniForgeApp::mainLoop() {
                 m_running = false;
         }
 
+        // Deferred font reload — must happen before NewFrame()
+        if (m_fontReloadPending) {
+            loadFont(m_pendingFontSize);
+            m_fontReloadPending = false;
+        }
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
@@ -136,6 +144,31 @@ void OniForgeApp::mainLoop() {
 }
 
 // ---------------------------------------------------------------------------
+// Font
+// ---------------------------------------------------------------------------
+
+void OniForgeApp::loadFont(const float size) {
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+
+    ImFontConfig config;
+    config.OversampleH = 3;
+    config.OversampleV = 3;
+    config.PixelSnapH  = true;
+
+    io.Fonts->AddFontFromMemoryCompressedTTF(
+        InterMediumFont_compressed_data,
+        InterMediumFont_compressed_size,
+        size,
+        &config
+    );
+
+    io.Fonts->Build();
+    ImGui_ImplOpenGL3_DestroyFontsTexture();
+    ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 
@@ -144,26 +177,24 @@ void OniForgeApp::render() {
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("##root", nullptr,
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoTitleBar  |
+        ImGuiWindowFlags_NoResize    |
+        ImGuiWindowFlags_NoMove      |
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_MenuBar
     );
 
     renderMenuBar();
 
-    constexpr float leftWidth = 250.0f;
-    const float rightWidth = ImGui::GetContentRegionAvail().x - leftWidth - 8.0f;
+    constexpr float leftWidth  = 250.0f;
+    const float     rightWidth = ImGui::GetContentRegionAvail().x - leftWidth - 8.0f;
 
-    // Left panel
     ImGui::BeginChild("##left", {leftWidth, 0}, true);
     renderLeftPanel();
     ImGui::EndChild();
 
     ImGui::SameLine();
 
-    // Right panel
     ImGui::BeginChild("##right", {rightWidth, 0}, true);
     renderRightPanel();
     ImGui::EndChild();
@@ -171,11 +202,47 @@ void OniForgeApp::render() {
     ImGui::End();
 }
 
+void OniForgeApp::renderMenuBar() {
+    if (!ImGui::BeginMenuBar()) return;
+
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Save All"))
+            m_project.saveToFolder(std::string(PROJECT_PATH));
+        ImGui::Separator();
+        if (ImGui::MenuItem("Exit"))
+            m_running = false;
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Settings")) {
+        if (ImGui::BeginMenu("Theme")) {
+            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
+            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
+            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
+            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Font Size")) {
+            for (int i = 0; i < FONT_COUNT; ++i) {
+                if (ImGui::MenuItem(FONT_LABELS[i], nullptr, m_currentFontIndex == i)) {
+                    m_currentFontIndex  = i;
+                    m_pendingFontSize   = FONT_SIZES[i];
+                    m_fontReloadPending = true;
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
+}
+
 void OniForgeApp::renderLeftPanel() {
     ImGui::TextDisabled("Project");
     ImGui::Separator();
 
-    // ONCC group
     if (const auto& onccFiles = m_project.getOnccFiles(); !onccFiles.empty()) {
         const std::string header = "ONCC (" + std::to_string(onccFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -187,7 +254,6 @@ void OniForgeApp::renderLeftPanel() {
         }
     }
 
-    // ONCV group (read-only for now)
     if (const auto& oncvFiles = m_project.getOncvFiles(); !oncvFiles.empty()) {
         const std::string header = "ONCV (" + std::to_string(oncvFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -196,7 +262,6 @@ void OniForgeApp::renderLeftPanel() {
         }
     }
 
-    // TRAC group (read-only for now)
     if (const auto& tracFiles = m_project.getTracFiles(); !tracFiles.empty()) {
         const std::string header = "TRAC (" + std::to_string(tracFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -205,7 +270,6 @@ void OniForgeApp::renderLeftPanel() {
         }
     }
 
-    // Add file button at the bottom
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 36.0f);
     ImGui::Separator();
     if (ImGui::Button("+ Add file..", {-1, 0}))
@@ -219,7 +283,6 @@ void OniForgeApp::renderRightPanel() {
         return;
     }
 
-    // Get mutable reference
     auto& files = const_cast<std::vector<OniFile<ONCC::Root>>&>(m_project.getOnccFiles());
     auto& file  = files[m_selectedOnccIndex];
 
@@ -238,7 +301,6 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
     constexpr float labelWidth = 120.0f;
     const float fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
-    // Name
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
     ImGui::SameLine(labelWidth);
@@ -260,38 +322,34 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Variant (ONCV combobox)
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Variant:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth);
     {
-        const auto names = getVanillaOncvNames();
+        const auto names   = getVanillaOncvNames();
         const std::string& current = oncc.variant;
         if (ImGui::BeginCombo("##variant", current.c_str())) {
             for (const auto& name : names) {
                 const bool selected = (name == current);
-                if (ImGui::Selectable(name.c_str(), selected))
-                    oncc.variant = name;
+                if (ImGui::Selectable(name.c_str(), selected)) oncc.variant = name;
                 if (selected) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
         }
     }
 
-    // Animations (TRAC combobox)
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Animations:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth);
     {
-        const auto names = getVanillaTracNames();
+        const auto names   = getVanillaTracNames();
         const std::string& current = oncc.animations;
         if (ImGui::BeginCombo("##animations", current.c_str())) {
             for (const auto& name : names) {
                 const bool selected = (name == current);
-                if (ImGui::Selectable(name.c_str(), selected))
-                    oncc.animations = name;
+                if (ImGui::Selectable(name.c_str(), selected)) oncc.animations = name;
                 if (selected) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
@@ -302,7 +360,6 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Health
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Health:");
     ImGui::SameLine(labelWidth);
@@ -311,11 +368,9 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
         char buf[64];
         strncpy(buf, oncc.health.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##health", buf, sizeof(buf)))
-            oncc.health = buf;
+        if (ImGui::InputText("##health", buf, sizeof(buf))) oncc.health = buf;
     }
 
-    // WeaponHand
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Weapon Hand:");
     ImGui::SameLine(labelWidth);
@@ -324,66 +379,21 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
         char buf[64];
         strncpy(buf, oncc.weaponHand.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##weaponhand", buf, sizeof(buf)))
-            oncc.weaponHand = buf;
+        if (ImGui::InputText("##weaponhand", buf, sizeof(buf))) oncc.weaponHand = buf;
     }
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Flags (checkboxes)
-    {
-        bool hasDaodan   = (oncc.hasDaodanPowers == "1");
-        bool hasSuper    = (oncc.hasSupershield  == "1");
-        bool cantTouch   = (oncc.cantTouchThis   == "1");
+    bool hasDaodan = (oncc.hasDaodanPowers == "1");
+    bool hasSuper  = (oncc.hasSupershield  == "1");
+    bool cantTouch = (oncc.cantTouchThis   == "1");
 
-        if (ImGui::Checkbox("Has Daodan Powers", &hasDaodan))
-            oncc.hasDaodanPowers = hasDaodan ? "1" : "0";
-        if (ImGui::Checkbox("Has Supershield",   &hasSuper))
-            oncc.hasSupershield  = hasSuper  ? "1" : "0";
-        if (ImGui::Checkbox("Can't Touch This",  &cantTouch))
-            oncc.cantTouchThis   = cantTouch ? "1" : "0";
-    }
+    if (ImGui::Checkbox("Has Daodan Powers", &hasDaodan)) oncc.hasDaodanPowers = hasDaodan ? "1" : "0";
+    if (ImGui::Checkbox("Has Supershield",   &hasSuper))  oncc.hasSupershield  = hasSuper  ? "1" : "0";
+    if (ImGui::Checkbox("Can't Touch This",  &cantTouch)) oncc.cantTouchThis   = cantTouch ? "1" : "0";
 }
-
-void OniForgeApp::applyTheme(const Theme theme) {
-    switch (theme) {
-        case Theme::Dark:    ImGui::StyleColorsDark();    break;
-        case Theme::Light:   ImGui::StyleColorsLight();   break;
-        case Theme::Classic: ImGui::StyleColorsClassic(); break;
-    }
-    m_currentTheme = theme;
-}
-
-void OniForgeApp::renderMenuBar() {
-    if (!ImGui::BeginMenuBar()) return;
-
-    if (ImGui::BeginMenu("File")) {
-        if (ImGui::MenuItem("Save All"))
-            m_project.saveToFolder(std::string(PROJECT_PATH));
-        ImGui::Separator();
-        if (ImGui::MenuItem("Exit"))
-            m_running = false;
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Settings")) {
-        if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))
-                applyTheme(Theme::Dark);
-            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))
-                applyTheme(Theme::Light);
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic))
-                applyTheme(Theme::Classic);
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenu();
-    }
-
-    ImGui::EndMenuBar();
-}
-
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,27 +1,23 @@
 #pragma once
 
+#include <string>
+#include <vector>
 #include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
+#include "gui/OniForgeTheme.hpp"
+#include "model/ONCC.hpp"
+#include "model/OniFile.hpp"
 #include "repository/ONCCRepository.hpp"
 #include "repository/ONCVRepository.hpp"
-#include "repository/TRACRepository.hpp"
 #include "repository/OniRepositoryRegistry.hpp"
-#include "service/VanillaCatalogService.hpp"
+#include "repository/TRACRepository.hpp"
 #include "service/ProjectCatalogService.hpp"
-#include "model/OniFile.hpp"
-#include "model/ONCC.hpp"
-
-#include <string>
-#include <vector>
+#include "service/VanillaCatalogService.hpp"
 
 struct SDL_Window;
 typedef void* SDL_GLContext;
 
-
-
-// Dopo gli altri include
-enum class Theme { Dark, Light, Classic };
 
 /**
  * @brief Main application class for OniForge.
@@ -69,12 +65,22 @@ private:
     bool          m_running  = false;
 
     // --- UI state ---
-    int m_selectedOnccIndex = -1;
-    Theme m_currentTheme = Theme::Dark;
+    int   m_selectedOnccIndex = -1;
+    Theme m_currentTheme      = Theme::Neutral;
+    int   m_currentFontIndex  = FONT_DEFAULT;
+    bool  m_fontReloadPending = false;
+    float m_pendingFontSize   = 15.0f;
+
+    // --- Font sizes available in settings ---
+    static constexpr float        FONT_SIZES[]  = { 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f };
+    static constexpr const char*  FONT_LABELS[] = { "13",  "14",  "15",  "16",  "17",  "18"  };
+    static constexpr int          FONT_COUNT    = 6;
+    static constexpr int          FONT_DEFAULT  = 2; // 15.0f
 
     // Nuovo metodo privato
-    void applyTheme(Theme theme);
     void renderMenuBar();
+
+    static void loadFont(float size);
 
 
     // --- Lifecycle ---

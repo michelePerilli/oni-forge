@@ -48,6 +48,7 @@ target_link_libraries(imgui_lib PUBLIC SDL2::SDL2)
 set(SOURCES
         src/main.cpp
         src/gui/OniForgeApp.cpp
+        src/gui/OniForgeTheme.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
@@ -65,7 +66,7 @@ if (MINGW)
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/assets)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         pugixml
