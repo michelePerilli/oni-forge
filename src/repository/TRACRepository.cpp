@@ -1,4 +1,5 @@
 #include "repository/TRACRepository.hpp"
+#include "model/mapping/TRACMapping.hpp"
 
 #include "component/logger/ILogger.hpp"
 #include "component/xml/XmlReader.hpp"
@@ -6,21 +7,17 @@
 
 TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
     : m_reader(reader)
-      , m_writer(writer)
-      , m_logger(logger) {
-}
+    , m_writer(writer)
+    , m_logger(logger) {}
 
-[[nodiscard]] std::optional<OniFile<TRAC::Root>> TRACRepository::load(const std::string& filePath) const {
+std::optional<OniFile<TRAC::Root>> TRACRepository::load(const std::string& filePath) const {
     XmlDocument document;
+    if (!m_reader.read(filePath, document)) return std::nullopt;
 
-    if (!m_reader.read(filePath, document)) {
-        return std::nullopt;
-    }
+    const auto root = parseDocument(document);
+    if (!root) return std::nullopt;
 
-    auto trac = parseDocument(document);
-    if (!trac) return std::nullopt;
-
-    return OniFile{filePath, *trac};
+    return OniFile<TRAC::Root>{ filePath, *root };
 }
 
 bool TRACRepository::save(const OniFile<TRAC::Root>& file) const {
@@ -29,55 +26,34 @@ bool TRACRepository::save(const OniFile<TRAC::Root>& file) const {
 }
 
 std::optional<TRAC::Root> TRACRepository::parseDocument(const XmlDocument& document) const {
-    const pugi::xml_node root = document.getRawDocument().child("Oni");
-    if (!root) {
+    const pugi::xml_node oni = document.getRawDocument().child("Oni");
+    if (!oni) {
         m_logger.error("[TRACRepository] Missing <Oni> root node.");
         return std::nullopt;
     }
 
-    const pugi::xml_node tracNode = root.child("TRAC");
-    if (!tracNode) {
-        m_logger.error("[TRACRepository] Missing <TRAC> node.");
-        return std::nullopt;
-    }
-
-    TRAC::Root trac;
-    trac.id = tracNode.attribute("id").as_int();
-    trac.parentCollection = tracNode.child_value("ParentCollection");
-
-    for (const pugi::xml_node& animNode: tracNode.child("Animations").children("TRACAnimation")) {
-        TRAC::TRACAnimation animation;
-        animation.weight = animNode.child("Weight").text().as_int();
-        animation.animation = animNode.child_value("Animation");
-        trac.animations.push_back(animation);
-    }
+    TRAC::Root root;
+    for (const auto& [xmlName, write, read] : tracRootFields)
+        read(oni.child("TRAC"), root);
 
     m_logger.info("[TRACRepository] Parsed TRAC with " +
-                  std::to_string(trac.animations.size()) + " animations.");
-    return trac;
+                  std::to_string(root.animations.size()) + " animations.");
+    return root;
 }
 
-XmlDocument TRACRepository::buildDocument(const TRAC::Root& trac) {
+XmlDocument TRACRepository::buildDocument(const TRAC::Root& root) {
     XmlDocument document;
     pugi::xml_document& doc = document.getRawDocument();
 
-    // XML declaration
     pugi::xml_node decl = doc.append_child(pugi::node_declaration);
-    decl.append_attribute("version") = "1.0";
+    decl.append_attribute("version")  = "1.0";
     decl.append_attribute("encoding") = "utf-8";
 
-    pugi::xml_node root = doc.append_child("Oni");
-    pugi::xml_node tracNode = root.append_child("TRAC");
-    tracNode.append_attribute("id") = trac.id;
+    pugi::xml_node oni  = doc.append_child("Oni");
+    pugi::xml_node trac = oni.append_child("TRAC");
+    for (const auto& [xmlName, write, read] : tracRootFields)
+        write(trac, root);
 
-    tracNode.append_child("ParentCollection").text().set(trac.parentCollection.c_str());
-
-    pugi::xml_node animationsNode = tracNode.append_child("Animations");
-    for (const auto& [weight, animation]: trac.animations) {
-        pugi::xml_node animNode = animationsNode.append_child("TRACAnimation");
-        animNode.append_child("Weight").text().set(weight);
-        animNode.append_child("Animation").text().set(animation.c_str());
-    }
     document.markAsLoaded();
     return document;
 }

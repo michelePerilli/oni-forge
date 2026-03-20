@@ -10,7 +10,7 @@ namespace ONCV {
      * Field names match the corresponding XML tag names.
      */
     struct Root {
-        int id;
+        std::string id;
         std::string parentVariant;
         std::string characterClass;
         std::string characterClassHard;

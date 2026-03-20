@@ -60,6 +60,9 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+if (MINGW)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wa,-mbig-obj)
+endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)

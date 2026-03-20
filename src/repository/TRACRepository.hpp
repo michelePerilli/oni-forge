@@ -16,7 +16,7 @@ class ILogger;
  * @brief Responsible for reading and writing TRAC files.
  *
  * Depends on XmlReader, XmlWriter and ILogger injected via constructor.
- * Knows how to map between the TRAC struct and its XML representation.
+ * All XML mapping logic lives in TRACMapping.hpp.
  */
 class TRACRepository {
 public:
@@ -39,7 +39,7 @@ public:
 private:
     const XmlReader& m_reader;
     const XmlWriter& m_writer;
-    const ILogger& m_logger;
+    const ILogger&   m_logger;
 
     /**
      * @brief Parses a TRAC struct from a loaded XmlDocument.
@@ -48,10 +48,5 @@ private:
      */
     [[nodiscard]] std::optional<TRAC::Root> parseDocument(const XmlDocument& document) const;
 
-    /**
-     * @brief Serializes a TRAC struct into a new XmlDocument.
-     * @param trac The TRAC struct to serialize.
-     * @return A populated XmlDocument ready to be written to disk.
-     */
-    [[nodiscard]] static XmlDocument buildDocument(const TRAC::Root& trac);
+    [[nodiscard]] static XmlDocument buildDocument(const TRAC::Root& root) ;
 };

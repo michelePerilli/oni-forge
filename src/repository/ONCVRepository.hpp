@@ -39,7 +39,7 @@ public:
 private:
     const XmlReader& m_reader;
     const XmlWriter& m_writer;
-    const ILogger& m_logger;
+    const ILogger&   m_logger;
 
     /**
      * @brief Parses an ONCV struct from a loaded XmlDocument.
@@ -50,8 +50,8 @@ private:
 
     /**
      * @brief Serializes an ONCV struct into a new XmlDocument.
-     * @param oncv The ONCV struct to serialize.
+     * @param root The ONCV struct to serialize.
      * @return A populated XmlDocument ready to be written to disk.
      */
-    [[nodiscard]] static XmlDocument buildDocument(const ONCV::Root& oncv);
+    [[nodiscard]] static XmlDocument buildDocument(const ONCV::Root& root);
 };

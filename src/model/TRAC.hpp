@@ -5,7 +5,7 @@
 
 namespace TRAC {
     struct TRACAnimation {
-        int weight;
+        std::string weight;
         std::string animation;
     };
 
@@ -16,7 +16,7 @@ namespace TRAC {
      * Field names match the corresponding XML tag names.
      */
     struct Root {
-        int id;
+        std::string id;
         std::string parentCollection;
         std::vector<TRACAnimation> animations;
     };

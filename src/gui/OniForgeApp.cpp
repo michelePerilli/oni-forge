@@ -267,7 +267,7 @@ void OniForgeApp::renderGeneralTab(OniFile<ONCC::Root>& file) {
     ImGui::SetNextItemWidth(fieldWidth);
     {
         const auto names = getVanillaOncvNames();
-        const std::string& current = oncc.variant.value_or("");
+        const std::string& current = oncc.variant;
         if (ImGui::BeginCombo("##variant", current.c_str())) {
             for (const auto& name : names) {
                 const bool selected = (name == current);
