@@ -232,18 +232,38 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
         ImGui::SameLine(labelWidth);
         ImGui::SetNextItemWidth(fieldWidth);
         {
+            static char filter[2][128] = {};
+            static bool wasOpen[2]     = {};
+
             const std::string& current = tram.directAnimations[i];
             if (ImGui::BeginCombo("##link", current.c_str())) {
-                if (ImGui::Selectable("(none)", current.empty()))
+                if (!wasOpen[i]) { filter[i][0] = '\0'; wasOpen[i] = true; }
+                ImGui::SetNextItemWidth(-1);
+                ImGui::InputText("##filter", filter[i], sizeof(filter[i]));
+                ImGui::Separator();
+
+                const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+                ImGui::BeginChild("##list", {0, listHeight}, false);
+
+                if (ImGui::Selectable("(none)", current.empty())) {
                     tram.directAnimations[i] = "";
+                    filter[i][0] = '\0';
+                }
                 for (const auto& [path, data] : m_vanilla.getTramFiles()) {
-                    const std::string name    = path.stem().string();
-                    const bool        selected = (name == current);
-                    if (ImGui::Selectable(name.c_str(), selected))
+                    const std::string name = path.stem().string();
+                    if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
+                        continue;
+                    const bool selected = (name == current);
+                    if (ImGui::Selectable(name.c_str(), selected)) {
                         tram.directAnimations[i] = name;
+                        filter[i][0] = '\0';
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
+                ImGui::EndChild();
                 ImGui::EndCombo();
+            } else {
+                wasOpen[i] = false;
             }
         }
         ImGui::PopID();
