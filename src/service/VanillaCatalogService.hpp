@@ -31,17 +31,22 @@ public:
 
     [[nodiscard]] const std::vector<OniFile<TRAC::Root>>& getTracFiles() const override;
 
+    [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
+
 private:
     const OniRepositoryRegistry& m_repos;
-    const ILogger& m_logger;
+    const ILogger&               m_logger;
 
     std::vector<OniFile<ONCC::Root>> m_onccFiles;
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;
     std::vector<OniFile<TRAC::Root>> m_tracFiles;
+    std::vector<OniFile<TRAM::Root>> m_tramFiles;
 
     void loadOnccFiles(const std::filesystem::path& folderPath);
 
     void loadOncvFiles(const std::filesystem::path& folderPath);
 
     void loadTracFiles(const std::filesystem::path& folderPath);
+
+    void loadTramFiles(const std::filesystem::path& folderPath);
 };

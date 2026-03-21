@@ -64,7 +64,7 @@ void AddFileModal::render() {
     renderGroup("ONCC", m_vanilla.getOnccFiles());
     renderGroup("ONCV", m_vanilla.getOncvFiles());
     renderGroup("TRAC", m_vanilla.getTracFiles());
-
+    renderGroup("TRAM", m_vanilla.getTramFiles());
     ImGui::EndChild();
 
     ImGui::Separator();
@@ -84,6 +84,8 @@ void AddFileModal::render() {
                 m_logger.warning("[UI] Failed to add ONCV: " + stem);
             if (!m_project.createTracFromVanilla(stem))
                 m_logger.warning("[UI] Failed to add TRAC: " + stem);
+            if (!m_project.createTramFromVanilla(stem))
+                m_logger.warning("[UI] Failed to add TRAM: " + stem);
         }
         m_pendingFiles.clear();
         m_justConfirmed = true;

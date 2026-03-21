@@ -70,6 +70,7 @@ set(SOURCES
         src/gui/views/ONCCView.cpp
         src/gui/views/ONCVView.cpp
         src/gui/views/TRACView.cpp
+        src/gui/views/TRAMView.cpp
         src/gui/views/AddFileModal.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
@@ -78,6 +79,7 @@ set(SOURCES
         src/repository/ONCCRepository.cpp
         src/repository/ONCVRepository.cpp
         src/repository/TRACRepository.cpp
+        src/repository/TRAMRepository.cpp
         src/service/ProjectCatalogService.cpp
         src/service/VanillaCatalogService.cpp
 )

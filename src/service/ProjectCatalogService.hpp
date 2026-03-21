@@ -18,8 +18,8 @@ class ILogger;
 class ProjectCatalogService final : public IOniCatalogService {
 public:
     ProjectCatalogService(const OniRepositoryRegistry& repos,
-                          IOniCatalogService& vanilla,
-                          const ILogger& logger);
+                          IOniCatalogService&          vanilla,
+                          const ILogger&               logger);
 
     /**
      * @brief Loads all supported files from the given project folder.
@@ -44,24 +44,31 @@ public:
 
     [[nodiscard]] bool createTracFromVanilla(const std::string& name);
 
+    [[nodiscard]] bool createTramFromVanilla(const std::string& name);
+
     [[nodiscard]] const std::vector<OniFile<ONCC::Root>>& getOnccFiles() const override;
 
     [[nodiscard]] const std::vector<OniFile<ONCV::Root>>& getOncvFiles() const override;
 
     [[nodiscard]] const std::vector<OniFile<TRAC::Root>>& getTracFiles() const override;
 
+    [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
+
 private:
     const OniRepositoryRegistry& m_repos;
-    const IOniCatalogService& m_vanilla;
-    const ILogger& m_logger;
+    const IOniCatalogService&    m_vanilla;
+    const ILogger&               m_logger;
 
     std::vector<OniFile<ONCC::Root>> m_onccFiles;
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;
     std::vector<OniFile<TRAC::Root>> m_tracFiles;
+    std::vector<OniFile<TRAM::Root>> m_tramFiles;
 
     void loadOnccFiles(const std::filesystem::path& folderPath);
 
     void loadOncvFiles(const std::filesystem::path& folderPath);
 
     void loadTracFiles(const std::filesystem::path& folderPath);
+
+    void loadTramFiles(const std::filesystem::path& folderPath);
 };

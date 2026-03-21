@@ -3,6 +3,7 @@
 #include "repository/ONCCRepository.hpp"
 #include "repository/ONCVRepository.hpp"
 #include "repository/TRACRepository.hpp"
+#include "repository/TRAMRepository.hpp"
 
 /**
  * @brief Aggregates all repositories into a single injectable struct.
@@ -15,4 +16,5 @@ struct OniRepositoryRegistry {
     const ONCCRepository& oncc;
     const ONCVRepository& oncv;
     const TRACRepository& trac;
+    const TRAMRepository& tram;
 };

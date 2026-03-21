@@ -2,38 +2,29 @@
 
 #include <imgui.h>
 
-// ---------------------------------------------------------------------------
-// Constructor
-// ---------------------------------------------------------------------------
-
 OniForgeApp::OniForgeApp()
     : m_logger("oniforge.log")
-    , m_reader(m_logger)
-    , m_writer(m_logger)
-    , m_onccRepo(m_reader, m_writer, m_logger)
-    , m_oncvRepo(m_reader, m_writer, m_logger)
-    , m_tracRepo(m_reader, m_writer, m_logger)
-    , m_repos{ m_onccRepo, m_oncvRepo, m_tracRepo }
-    , m_vanilla(m_repos, m_logger)
-    , m_project(m_repos, m_vanilla, m_logger)
-    , m_onccView(m_vanilla, m_project)
-    , m_oncvView(m_vanilla, m_project)
-    , m_tracView(m_vanilla, m_project)
-    , m_addFileModal(m_vanilla, m_project, m_logger) {}
-
-// ---------------------------------------------------------------------------
-// Public
-// ---------------------------------------------------------------------------
+      , m_reader(m_logger)
+      , m_writer(m_logger)
+      , m_onccRepo(m_reader, m_writer, m_logger)
+      , m_oncvRepo(m_reader, m_writer, m_logger)
+      , m_tracRepo(m_reader, m_writer, m_logger)
+      , m_tramRepo(m_reader, m_writer, m_logger)
+      , m_repos{m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo}
+      , m_vanilla(m_repos, m_logger)
+      , m_project(m_repos, m_vanilla, m_logger)
+      , m_onccView(m_vanilla, m_project)
+      , m_oncvView(m_vanilla, m_project)
+      , m_tracView(m_vanilla, m_project)
+      , m_tramView( m_project)
+      , m_addFileModal(m_vanilla, m_project, m_logger) {
+}
 
 int OniForgeApp::run() {
     if (!init()) return 1;
     mainLoop();
     return 0;
 }
-
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
 
 bool OniForgeApp::init() {
     m_logger.separator();
@@ -54,27 +45,22 @@ void OniForgeApp::mainLoop() {
             m_renderer.loadFont(m_pendingFontSize);
             m_fontReloadPending = false;
         }
-
         m_renderer.beginFrame(m_running);
         render();
         m_renderer.endFrame();
     }
 }
 
-// ---------------------------------------------------------------------------
-// Render
-// ---------------------------------------------------------------------------
-
 void OniForgeApp::render() {
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("##root", nullptr,
-        ImGuiWindowFlags_NoTitleBar  |
-        ImGuiWindowFlags_NoResize    |
-        ImGuiWindowFlags_NoMove      |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_MenuBar
+                 ImGuiWindowFlags_NoTitleBar |
+                 ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoScrollbar |
+                 ImGuiWindowFlags_MenuBar
     );
 
     renderMenuBar();
@@ -111,10 +97,22 @@ void OniForgeApp::renderMenuBar() {
 
     if (ImGui::BeginMenu("Settings")) {
         if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { m_renderer.applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
-            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { m_renderer.applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { m_renderer.applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
-            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { m_renderer.applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
+            if (ImGui::MenuItem("Dark", nullptr, m_currentTheme == Theme::Dark)) {
+                m_renderer.applyTheme(Theme::Dark);
+                m_currentTheme = Theme::Dark;
+            }
+            if (ImGui::MenuItem("Light", nullptr, m_currentTheme == Theme::Light)) {
+                m_renderer.applyTheme(Theme::Light);
+                m_currentTheme = Theme::Light;
+            }
+            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) {
+                m_renderer.applyTheme(Theme::Classic);
+                m_currentTheme = Theme::Classic;
+            }
+            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) {
+                m_renderer.applyTheme(Theme::Neutral);
+                m_currentTheme = Theme::Neutral;
+            }
             ImGui::EndMenu();
         }
         ImGui::Separator();
@@ -147,6 +145,7 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedOnccIndex = i;
                     m_selectedOncvIndex = -1;
                     m_selectedTracIndex = -1;
+                    m_selectedTramIndex = -1;
                 }
             }
         }
@@ -161,6 +160,7 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedOncvIndex = i;
                     m_selectedOnccIndex = -1;
                     m_selectedTracIndex = -1;
+                    m_selectedTramIndex = -1;
                 }
             }
         }
@@ -175,7 +175,23 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedTracIndex = i;
                     m_selectedOnccIndex = -1;
                     m_selectedOncvIndex = -1;
+                    m_selectedTramIndex = -1;
                     m_tracView.onFileChanged();
+                }
+            }
+        }
+    }
+
+    if (const auto& tramFiles = m_project.getTramFiles(); !tramFiles.empty()) {
+        const std::string header = "TRAM (" + std::to_string(tramFiles.size()) + ")";
+        if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+            for (int i = 0; i < static_cast<int>(tramFiles.size()); ++i) {
+                const std::string name = tramFiles[i].path.stem().string();
+                if (const bool selected = (m_selectedTramIndex == i); ImGui::Selectable(name.c_str(), selected)) {
+                    m_selectedTramIndex = i;
+                    m_selectedOnccIndex = -1;
+                    m_selectedOncvIndex = -1;
+                    m_selectedTracIndex = -1;
                 }
             }
         }
@@ -220,6 +236,19 @@ void OniForgeApp::renderRightPanel() {
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
                 m_tracView.render(files[m_selectedTracIndex], m_selectedTracIndex);
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+        return;
+    }
+
+    if (m_selectedTramIndex >= 0 &&
+        m_selectedTramIndex < static_cast<int>(m_project.getTramFiles().size())) {
+        auto& files = const_cast<std::vector<OniFile<TRAM::Root>>&>(m_project.getTramFiles());
+        if (ImGui::BeginTabBar("##tabs")) {
+            if (ImGui::BeginTabItem("Animation")) {
+                m_tramView.render(files[m_selectedTramIndex], m_selectedTramIndex);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();

@@ -2,6 +2,8 @@
 
 #include <pugixml.hpp>
 #include <functional>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -14,7 +16,7 @@
  */
 template<typename T>
 struct XmlField {
-    const char* xmlName;
+    const char*                                    xmlName;
     std::function<void(pugi::xml_node&, const T&)> write;
     std::function<void(const pugi::xml_node&, T&)> read;
 };
@@ -42,6 +44,66 @@ struct XmlField {
       }, \
       [](const pugi::xml_node& n, auto& o) { \
           o.Member = n.attribute(Attr).as_string(); \
+      } \
+    }
+
+// Optional string element: written only if has value
+#define OPT_STR_FIELD(Tag, Member) \
+    { Tag, \
+      [](pugi::xml_node& n, const auto& o) { \
+          if (o.Member) n.append_child(Tag).text().set(o.Member->c_str()); \
+      }, \
+      [](const pugi::xml_node& n, auto& o) { \
+          if (const auto c = n.child(Tag)) o.Member = c.text().as_string(); \
+      } \
+    }
+
+// Optional attribute on a self-closing tag: <Tag Attr="value" />
+// Written only if the optional has a value, skipped entirely otherwise.
+#define OPT_ATTR_TAG_FIELD(Tag, Attr, Member) \
+    { Tag, \
+      [](pugi::xml_node& n, const auto& o) { \
+          if (o.Member) { \
+              auto t = n.append_child(Tag); \
+              t.append_attribute(Attr) = o.Member->c_str(); \
+          } \
+      }, \
+      [](const pugi::xml_node& n, auto& o) { \
+          if (const auto t = n.child(Tag)) { \
+              if (const auto a = t.attribute(Attr)) \
+                  o.Member = std::string(a.as_string()); \
+          } \
+      } \
+    }
+
+// Empty tag: <Tag /> — always written as self-closing, content ignored
+#define EMPTY_TAG_FIELD(Tag, Member) \
+    { Tag, \
+      [](pugi::xml_node& n, const auto&) { \
+          n.append_child(Tag); \
+      }, \
+      [](const pugi::xml_node&, auto&) {} \
+    }
+
+// Raw XML field: reads/writes the inner XML of a node as a raw string
+// Useful for complex nodes (Heights, Velocities, Rotations, etc.)
+// that are not user-editable and must be preserved exactly.
+#define RAW_XML_FIELD(Tag, Member) \
+    { Tag, \
+      [](pugi::xml_node& n, const auto& o) { \
+          if (!o.Member.empty()) { \
+              auto outer = n.append_child(Tag); \
+              outer.append_buffer(o.Member.c_str(), o.Member.size()); \
+          } \
+      }, \
+      [](const pugi::xml_node& n, auto& o) { \
+          if (const auto c = n.child(Tag)) { \
+              std::ostringstream ss; \
+              for (const auto& child : c.children()) { \
+                  child.print(ss, "    ", pugi::format_default); \
+              } \
+              o.Member = ss.str(); \
+          } \
       } \
     }
 
@@ -83,6 +145,24 @@ struct XmlField {
       [](const pugi::xml_node& n, auto& o) { \
           const auto s = n.child(Tag); \
           for (const auto& f : FieldsArray) f.read(s, o.Member); \
+      } \
+    }
+
+// Optional sub-struct: written only if the optional has a value
+#define OPT_SUB_STRUCT_FIELD(Tag, Member, FieldsArray) \
+    { Tag, \
+      [](pugi::xml_node& n, const auto& o) { \
+          if (o.Member) { \
+              auto s = n.append_child(Tag); \
+              for (const auto& f : FieldsArray) f.write(s, *o.Member); \
+          } \
+      }, \
+      [](const pugi::xml_node& n, auto& o) { \
+          if (const auto s = n.child(Tag)) { \
+              std::decay_t<decltype(*o.Member)> val{}; \
+              for (const auto& f : FieldsArray) f.read(s, val); \
+              o.Member = val; \
+          } \
       } \
     }
 

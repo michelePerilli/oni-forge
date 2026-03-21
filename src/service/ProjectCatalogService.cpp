@@ -3,8 +3,8 @@
 #include "repository/OniRepositoryRegistry.hpp"
 
 ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
-                                             IOniCatalogService& vanilla,
-                                             const ILogger& logger)
+                                             IOniCatalogService&          vanilla,
+                                             const ILogger&               logger)
     : m_repos(repos)
       , m_vanilla(vanilla)
       , m_logger(logger) {
@@ -19,9 +19,11 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     loadOnccFiles(folderPath);
     loadOncvFiles(folderPath);
     loadTracFiles(folderPath);
+    loadTramFiles(folderPath);
     m_logger.info("[ProjectCatalogService] Loaded " +
                   std::to_string(m_onccFiles.size()) + " ONCC, " +
                   std::to_string(m_oncvFiles.size()) + " ONCV, " +
+                  std::to_string(m_tramFiles.size()) + " TRAM, " +
                   std::to_string(m_tracFiles.size()) + " TRAC files.");
 }
 
@@ -64,6 +66,20 @@ void ProjectCatalogService::loadTracFiles(const std::filesystem::path& folderPat
             continue;
         }
         m_tracFiles.push_back(std::move(*result));
+    }
+}
+
+void ProjectCatalogService::loadTramFiles(const std::filesystem::path& folderPath) {
+    for (const auto& entry: std::filesystem::directory_iterator(folderPath)) {
+        const auto& path = entry.path();
+        if (path.extension() != OniForge::xmlExtension || !path.stem().string().starts_with(OniForge::TRAMPrefix))
+            continue;
+        auto result = m_repos.tram.load(path.string());
+        if (!result) {
+            m_logger.warning("[VanillaCatalogService] Failed to load TRAC: " + path.string());
+            continue;
+        }
+        m_tramFiles.push_back(std::move(*result));
     }
 }
 
@@ -133,6 +149,18 @@ bool ProjectCatalogService::createTracFromVanilla(const std::string& name) {
     return false;
 }
 
+bool ProjectCatalogService::createTramFromVanilla(const std::string& name) {
+    for (const auto& file: m_vanilla.getTramFiles()) {
+        if (file.path.stem().string() == name) {
+            m_tramFiles.push_back(file);
+            m_logger.info("[ProjectCatalogService] Added TRAM from vanilla: " + name);
+            return true;
+        }
+    }
+    m_logger.warning("[ProjectCatalogService] TRAM not found in vanilla: " + name);
+    return false;
+}
+
 // ---------------------------------------------------------------------------
 // Getters
 // ---------------------------------------------------------------------------
@@ -147,4 +175,8 @@ const std::vector<OniFile<ONCV::Root>>& ProjectCatalogService::getOncvFiles() co
 
 const std::vector<OniFile<TRAC::Root>>& ProjectCatalogService::getTracFiles() const {
     return m_tracFiles;
+}
+
+const std::vector<OniFile<TRAM::Root>>& ProjectCatalogService::getTramFiles() const {
+    return m_tramFiles;
 }

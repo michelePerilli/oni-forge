@@ -11,9 +11,11 @@ void VanillaCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     loadOnccFiles(folderPath);
     loadOncvFiles(folderPath);
     loadTracFiles(folderPath);
+    loadTramFiles(folderPath);
     m_logger.info("[VanillaCatalogService] Loaded " +
                   std::to_string(m_onccFiles.size()) + " ONCC, " +
                   std::to_string(m_oncvFiles.size()) + " ONCV, " +
+                  std::to_string(m_tramFiles.size()) + " TRAM, " +
                   std::to_string(m_tracFiles.size()) + " TRAC files.");
 }
 
@@ -27,6 +29,10 @@ const std::vector<OniFile<ONCV::Root>>& VanillaCatalogService::getOncvFiles() co
 
 const std::vector<OniFile<TRAC::Root>>& VanillaCatalogService::getTracFiles() const {
     return m_tracFiles;
+}
+
+const std::vector<OniFile<TRAM::Root>>& VanillaCatalogService::getTramFiles() const {
+    return m_tramFiles;
 }
 
 void VanillaCatalogService::loadOnccFiles(const std::filesystem::path& folderPath) {
@@ -68,5 +74,19 @@ void VanillaCatalogService::loadTracFiles(const std::filesystem::path& folderPat
             continue;
         }
         m_tracFiles.push_back(std::move(*result));
+    }
+}
+
+void VanillaCatalogService::loadTramFiles(const std::filesystem::path& folderPath) {
+    for (const auto& entry : std::filesystem::directory_iterator(folderPath)) {
+        const auto& path = entry.path();
+        if (path.extension() != OniForge::xmlExtension || !path.stem().string().starts_with(OniForge::TRAMPrefix))
+            continue;
+        auto result = m_repos.tram.load(path.string());
+        if (!result) {
+            m_logger.warning("[VanillaCatalogService] Failed to load TRAC: " + path.string());
+            continue;
+        }
+        m_tramFiles.push_back(std::move(*result));
     }
 }

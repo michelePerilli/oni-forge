@@ -18,4 +18,5 @@ namespace OniForge {
     constexpr std::string_view ONCCPrefix    = "ONCC";
     constexpr std::string_view ONCVPrefix    = "ONCV";
     constexpr std::string_view TRACPrefix    = "TRAC";
+    constexpr std::string_view TRAMPrefix    = "TRAM";
 }

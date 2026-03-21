@@ -6,6 +6,7 @@
 #include "repository/ONCCRepository.hpp"
 #include "repository/ONCVRepository.hpp"
 #include "repository/TRACRepository.hpp"
+#include "repository/TRAMRepository.hpp"
 #include "repository/OniRepositoryRegistry.hpp"
 #include "service/VanillaCatalogService.hpp"
 #include "service/ProjectCatalogService.hpp"
@@ -14,28 +15,19 @@
 #include "gui/views/ONCCView.hpp"
 #include "gui/views/ONCVView.hpp"
 #include "gui/views/TRACView.hpp"
+#include "gui/views/TRAMView.hpp"
 #include "gui/views/AddFileModal.hpp"
 
 #include <string>
 
-/**
- * @brief Main application class for OniForge.
- *
- * Owns all domain dependencies, the renderer and the UI tabs.
- * Responsible only for the main loop, left panel and menu bar.
- */
 class OniForgeApp {
 public:
     OniForgeApp();
-
     ~OniForgeApp() = default;
 
     OniForgeApp(const OniForgeApp&) = delete;
-
     OniForgeApp& operator=(const OniForgeApp&) = delete;
-
     OniForgeApp(OniForgeApp&&) = delete;
-
     OniForgeApp& operator=(OniForgeApp&&) = delete;
 
     int run();
@@ -44,8 +36,8 @@ private:
     static constexpr std::string_view VANILLA_PATH = R"(D:\Dev\java\oniforge\vanilla\xml)";
     static constexpr std::string_view PROJECT_PATH = R"(D:\Dev\mods\oni\TCTFagent)";
 
-    static constexpr float       FONT_SIZES[]  = {13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f};
-    static constexpr const char* FONT_LABELS[] = {"13", "14", "15", "16", "17", "18"};
+    static constexpr float       FONT_SIZES[]  = { 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f };
+    static constexpr const char* FONT_LABELS[] = { "13",  "14",  "15",  "16",  "17",  "18"  };
     static constexpr int         FONT_COUNT    = 6;
     static constexpr int         FONT_DEFAULT  = 2;
 
@@ -56,6 +48,7 @@ private:
     ONCCRepository        m_onccRepo;
     ONCVRepository        m_oncvRepo;
     TRACRepository        m_tracRepo;
+    TRAMRepository        m_tramRepo;
     OniRepositoryRegistry m_repos;
 
     // --- Services ---
@@ -65,10 +58,11 @@ private:
     // --- Renderer ---
     OniGuiRenderer m_renderer;
 
-    // --- Tabs ---
+    // --- Views ---
     ONCCView     m_onccView;
     ONCVView     m_oncvView;
     TRACView     m_tracView;
+    TRAMView     m_tramView;
     AddFileModal m_addFileModal;
 
     // --- App state ---
@@ -76,6 +70,7 @@ private:
     int   m_selectedOnccIndex = -1;
     int   m_selectedOncvIndex = -1;
     int   m_selectedTracIndex = -1;
+    int   m_selectedTramIndex = -1;
     Theme m_currentTheme      = Theme::Neutral;
     int   m_currentFontIndex  = FONT_DEFAULT;
     bool  m_fontReloadPending = false;
@@ -83,15 +78,11 @@ private:
 
     // --- Lifecycle ---
     bool init();
-
     void mainLoop();
 
     // --- Render ---
     void render();
-
     void renderMenuBar();
-
     void renderLeftPanel();
-
     void renderRightPanel();
 };
