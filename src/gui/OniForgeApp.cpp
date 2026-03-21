@@ -1,19 +1,11 @@
 #include "gui/OniForgeApp.hpp"
 
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_sdl2.h>
-
-#include <SDL.h>
-#include <SDL_opengl.h>
-
 #include <algorithm>
-#include <cstdio>
 #include <filesystem>
-#include "fonts/ConsolasFont.hpp"
+#include <imgui.h>
 
 // ---------------------------------------------------------------------------
-// Constructor / Destructor
+// Constructor
 // ---------------------------------------------------------------------------
 
 OniForgeApp::OniForgeApp()
@@ -27,9 +19,9 @@ OniForgeApp::OniForgeApp()
     , m_vanilla(m_repos, m_logger)
     , m_project(m_repos, m_vanilla, m_logger) {}
 
-OniForgeApp::~OniForgeApp() {
-    shutdown();
-}
+// ---------------------------------------------------------------------------
+// Public
+// ---------------------------------------------------------------------------
 
 int OniForgeApp::run() {
     if (!init()) return 1;
@@ -48,125 +40,26 @@ bool OniForgeApp::init() {
     snapshotOriginalPaths();
     m_logger.separator();
 
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        printf("[OniForgeApp] SDL_Init error: %s\n", SDL_GetError());
+    if (!m_renderer.init("OniForge", 1280, 720, m_currentTheme, FONT_SIZES[m_currentFontIndex]))
         return false;
-    }
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-    m_window = SDL_CreateWindow(
-        "OniForge",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1280, 720,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
-    );
-
-    if (!m_window) {
-        printf("[OniForgeApp] SDL_CreateWindow error: %s\n", SDL_GetError());
-        return false;
-    }
-
-    m_glContext = SDL_GL_CreateContext(m_window);
-    if (!m_glContext) {
-        printf("[OniForgeApp] SDL_GL_CreateContext error: %s\n", SDL_GetError());
-        return false;
-    }
-
-    SDL_GL_MakeCurrent(m_window, m_glContext);
-    SDL_GL_SetSwapInterval(1);
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    applyTheme(m_currentTheme);
-
-    ImGui_ImplSDL2_InitForOpenGL(m_window, m_glContext);
-    ImGui_ImplOpenGL3_Init("#version 330");
-
-    loadFont(FONT_SIZES[m_currentFontIndex]);
 
     m_running = true;
     return true;
 }
 
-void OniForgeApp::shutdown() const {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-    if (m_glContext) SDL_GL_DeleteContext(m_glContext);
-    if (m_window)    SDL_DestroyWindow(m_window);
-    SDL_Quit();
-}
-
 void OniForgeApp::mainLoop() {
     while (m_running) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT) m_running = false;
-            if (event.type == SDL_WINDOWEVENT &&
-                event.window.event == SDL_WINDOWEVENT_CLOSE &&
-                event.window.windowID == SDL_GetWindowID(m_window))
-                m_running = false;
-        }
-
         if (m_fontReloadPending) {
-            loadFont(m_pendingFontSize);
+            m_renderer.loadFont(m_pendingFontSize);
             m_fontReloadPending = false;
         }
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-        ImGui::NewFrame();
+        m_renderer.beginFrame(m_running);
 
         render();
 
-        ImGui::Render();
-        int w, h;
-        SDL_GL_GetDrawableSize(m_window, &w, &h);
-        glViewport(0, 0, w, h);
-        glClearColor(0.12f, 0.12f, 0.12f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        SDL_GL_SwapWindow(m_window);
+        m_renderer.endFrame();
     }
-}
-
-// ---------------------------------------------------------------------------
-// Font
-// ---------------------------------------------------------------------------
-
-void OniForgeApp::loadFont(const float size) {
-    ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->Clear();
-    io.Fonts->Flags |= ImFontAtlasFlags_NoPowerOfTwoHeight;
-
-    ImFontConfig config;
-    config.OversampleH        = 1;
-    config.OversampleV        = 1;
-    config.PixelSnapH         = true;
-    config.RasterizerDensity  = 1.0f;
-    config.RasterizerMultiply = 1.0f;
-
-    io.Fonts->AddFontFromMemoryCompressedTTF(
-        ConsolasFont_compressed_data,
-        ConsolasFont_compressed_size,
-        size,
-        &config
-    );
-
-    io.Fonts->Build();
-    ImGui_ImplOpenGL3_DestroyFontsTexture();
-    ImGui_ImplOpenGL3_CreateFontsTexture();
 }
 
 // ---------------------------------------------------------------------------
@@ -219,10 +112,10 @@ void OniForgeApp::renderMenuBar() {
 
     if (ImGui::BeginMenu("Settings")) {
         if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
-            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
-            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
+            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { m_renderer.applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
+            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { m_renderer.applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
+            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { m_renderer.applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
+            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { m_renderer.applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
             ImGui::EndMenu();
         }
         ImGui::Separator();
@@ -599,18 +492,20 @@ void OniForgeApp::snapshotOriginalPaths() {
         m_originalOncvPaths[i] = m_project.getOncvFiles()[i].path;
 }
 
-void OniForgeApp::saveWithRename(const OniFile<ONCC::Root>& file) {
+void OniForgeApp::saveWithRename(OniFile<ONCC::Root>& file) {
     if (m_originalOnccPaths.contains(m_selectedOnccIndex)) {
-        if (const auto& original = m_originalOnccPaths[m_selectedOnccIndex]; original != file.path && std::filesystem::exists(original))
+        const auto& original = m_originalOnccPaths[m_selectedOnccIndex];
+        if (original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalOnccPaths[m_selectedOnccIndex] = file.path;
     }
     m_project.saveToFolder(file.path.parent_path());
 }
 
-void OniForgeApp::saveWithRename(const OniFile<ONCV::Root>& file) {
+void OniForgeApp::saveWithRename(OniFile<ONCV::Root>& file) {
     if (m_originalOncvPaths.contains(m_selectedOncvIndex)) {
-        if (const auto& original = m_originalOncvPaths[m_selectedOncvIndex]; original != file.path && std::filesystem::exists(original))
+        const auto& original = m_originalOncvPaths[m_selectedOncvIndex];
+        if (original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalOncvPaths[m_selectedOncvIndex] = file.path;
     }

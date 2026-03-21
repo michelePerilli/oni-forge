@@ -3,16 +3,17 @@
 #include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
-#include "repository/ONCCRepository.hpp"
-#include "repository/ONCVRepository.hpp"
-#include "repository/TRACRepository.hpp"
-#include "repository/OniRepositoryRegistry.hpp"
-#include "service/VanillaCatalogService.hpp"
-#include "service/ProjectCatalogService.hpp"
-#include "model/OniFile.hpp"
+#include "gui/OniGuiRenderer.hpp"
+#include "gui/OniForgeTheme.hpp"
 #include "model/ONCC.hpp"
 #include "model/ONCV.hpp"
-#include "gui/OniForgeTheme.hpp"
+#include "model/OniFile.hpp"
+#include "repository/ONCCRepository.hpp"
+#include "repository/ONCVRepository.hpp"
+#include "repository/OniRepositoryRegistry.hpp"
+#include "repository/TRACRepository.hpp"
+#include "service/ProjectCatalogService.hpp"
+#include "service/VanillaCatalogService.hpp"
 
 #include <filesystem>
 #include <string>
@@ -20,13 +21,17 @@
 #include <unordered_set>
 #include <vector>
 
-struct SDL_Window;
-typedef void* SDL_GLContext;
-
+/**
+ * @brief Main application class for OniForge.
+ *
+ * Owns all domain dependencies and the ImGuiRenderer.
+ * Responsible for the main loop and all render logic.
+ * Does not know anything about SDL2 or OpenGL directly.
+ */
 class OniForgeApp {
 public:
     OniForgeApp();
-    ~OniForgeApp();
+    ~OniForgeApp() = default;
 
     OniForgeApp(const OniForgeApp&) = delete;
     OniForgeApp& operator=(const OniForgeApp&) = delete;
@@ -44,6 +49,9 @@ private:
     static constexpr int         FONT_COUNT    = 6;
     static constexpr int         FONT_DEFAULT  = 2;
 
+    // --- Renderer ---
+    OniGuiRenderer m_renderer;
+
     // --- Infrastructure ---
     Logger                m_logger;
     XmlReader             m_reader;
@@ -57,12 +65,8 @@ private:
     VanillaCatalogService m_vanilla;
     ProjectCatalogService m_project;
 
-    // --- SDL / GL ---
-    SDL_Window*   m_window   = nullptr;
-    SDL_GLContext m_glContext = nullptr;
-    bool          m_running  = false;
-
-    // --- UI state ---
+    // --- App state ---
+    bool  m_running           = false;
     int   m_selectedOnccIndex = -1;
     int   m_selectedOncvIndex = -1;
     Theme m_currentTheme      = Theme::Neutral;
@@ -80,9 +84,7 @@ private:
 
     // --- Lifecycle ---
     bool init();
-    void shutdown() const;
     void mainLoop();
-    static void loadFont(float size);
 
     // --- Render ---
     void render();
@@ -95,8 +97,8 @@ private:
 
     // --- Helpers ---
     void snapshotOriginalPaths();
-    void saveWithRename(const OniFile<ONCC::Root>& file);
-    void saveWithRename(const OniFile<ONCV::Root>& file);
+    void saveWithRename(OniFile<ONCC::Root>& file);
+    void saveWithRename(OniFile<ONCV::Root>& file);
     [[nodiscard]] std::vector<std::string> getVanillaOncvNames() const;
     [[nodiscard]] std::vector<std::string> getVanillaOncvNamesStripped() const;
     [[nodiscard]] std::vector<std::string> getVanillaTracNames() const;

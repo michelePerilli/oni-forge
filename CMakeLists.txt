@@ -49,6 +49,7 @@ set(SOURCES
         src/main.cpp
         src/gui/OniForgeApp.cpp
         src/gui/OniForgeTheme.cpp
+        src/gui/OniGuiRenderer.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
