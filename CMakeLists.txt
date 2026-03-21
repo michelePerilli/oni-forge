@@ -67,6 +67,10 @@ set(SOURCES
         src/gui/OniForgeApp.cpp
         src/gui/OniForgeTheme.cpp
         src/gui/OniGuiRenderer.cpp
+        src/gui/views/ONCCView.cpp
+        src/gui/views/ONCVView.cpp
+        src/gui/views/TRACView.cpp
+        src/gui/views/AddFileModal.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
