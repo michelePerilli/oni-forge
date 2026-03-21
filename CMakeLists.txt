@@ -25,7 +25,19 @@ FetchContent_Declare(
         GIT_TAG        v1.91.0
 )
 
-FetchContent_MakeAvailable(pugixml SDL2 imgui)
+FetchContent_Declare(
+        freetype
+        GIT_REPOSITORY https://github.com/freetype/freetype.git
+        GIT_TAG        VER-2-14-2
+)
+
+set(FT_DISABLE_ZLIB      ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2     ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG       ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_HARFBUZZ  ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BROTLI    ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(pugixml SDL2 imgui freetype)
 
 # --- ImGui static library ---
 add_library(imgui_lib STATIC
@@ -35,14 +47,19 @@ add_library(imgui_lib STATIC
         ${imgui_SOURCE_DIR}/imgui_widgets.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+        ${imgui_SOURCE_DIR}/misc/freetype/imgui_freetype.cpp
 )
 
 target_include_directories(imgui_lib PUBLIC
         ${imgui_SOURCE_DIR}
         ${imgui_SOURCE_DIR}/backends
 )
-
+target_include_directories(imgui_lib PRIVATE
+        ${freetype_SOURCE_DIR}/include
+)
+target_compile_definitions(imgui_lib PUBLIC IMGUI_ENABLE_FREETYPE)
 target_link_libraries(imgui_lib PUBLIC SDL2::SDL2)
+target_link_libraries(imgui_lib PRIVATE freetype)
 
 # --- Sources ---
 set(SOURCES
@@ -62,12 +79,17 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
 if (MINGW)
     target_compile_options(${PROJECT_NAME} PRIVATE -Wa,-mbig-obj)
 endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/assets)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/assets
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         pugixml

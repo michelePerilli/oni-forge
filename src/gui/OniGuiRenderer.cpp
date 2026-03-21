@@ -6,9 +6,8 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <cstdio>
-
-#include "fonts/ConsolasFont.hpp"
-
+#include "misc/freetype/imgui_freetype.h"
+#include "fonts/InterMediumFont.hpp"
 // ---------------------------------------------------------------------------
 // Destructor
 // ---------------------------------------------------------------------------
@@ -22,7 +21,7 @@ OniGuiRenderer::~OniGuiRenderer() {
 // ---------------------------------------------------------------------------
 
 bool OniGuiRenderer::init(const char* windowTitle, const int width, const int height,
-                         const Theme theme, const float fontSize) {
+                          const Theme theme, const float     fontSize) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("[ImGuiRenderer] SDL_Init error: %s\n", SDL_GetError());
         return false;
@@ -40,7 +39,7 @@ bool OniGuiRenderer::init(const char* windowTitle, const int width, const int he
         windowTitle,
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         width, height,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
     if (!m_window) {
@@ -83,7 +82,7 @@ void OniGuiRenderer::shutdown() {
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
     if (m_glContext) SDL_GL_DeleteContext(m_glContext);
-    if (m_window)    SDL_DestroyWindow(m_window);
+    if (m_window) SDL_DestroyWindow(m_window);
     SDL_Quit();
     m_initialized = false;
 }
@@ -92,7 +91,7 @@ void OniGuiRenderer::shutdown() {
 // Frame
 // ---------------------------------------------------------------------------
 
-void OniGuiRenderer::beginFrame(bool& running) {
+void OniGuiRenderer::beginFrame(bool& running) const {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL2_ProcessEvent(&event);
@@ -108,7 +107,7 @@ void OniGuiRenderer::beginFrame(bool& running) {
     ImGui::NewFrame();
 }
 
-void OniGuiRenderer::endFrame() {
+void OniGuiRenderer::endFrame() const {
     ImGui::Render();
     int w, h;
     SDL_GL_GetDrawableSize(m_window, &w, &h);
@@ -124,9 +123,9 @@ void OniGuiRenderer::endFrame() {
 // ---------------------------------------------------------------------------
 
 void OniGuiRenderer::loadFont(const float size) {
-    ImGuiIO& io = ImGui::GetIO();
+    const ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-    io.Fonts->Flags |= ImFontAtlasFlags_NoPowerOfTwoHeight;
+    io.Fonts->Flags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 
     ImFontConfig config;
     config.OversampleH        = 1;
@@ -136,8 +135,8 @@ void OniGuiRenderer::loadFont(const float size) {
     config.RasterizerMultiply = 1.0f;
 
     io.Fonts->AddFontFromMemoryCompressedTTF(
-        ConsolasFont_compressed_data,
-        ConsolasFont_compressed_size,
+        InterMediumFont_compressed_data,
+        InterMediumFont_compressed_size,
         size,
         &config
     );
@@ -151,6 +150,6 @@ void OniGuiRenderer::loadFont(const float size) {
 // Theme
 // ---------------------------------------------------------------------------
 
-void OniGuiRenderer::applyTheme(const Theme theme) const {
+void OniGuiRenderer::applyTheme(const Theme theme) {
     ::applyTheme(theme);
 }

@@ -15,11 +15,15 @@ typedef void* SDL_GLContext;
 class OniGuiRenderer {
 public:
     OniGuiRenderer() = default;
+
     ~OniGuiRenderer();
 
     OniGuiRenderer(const OniGuiRenderer&) = delete;
+
     OniGuiRenderer& operator=(const OniGuiRenderer&) = delete;
+
     OniGuiRenderer(OniGuiRenderer&&) = delete;
+
     OniGuiRenderer& operator=(OniGuiRenderer&&) = delete;
 
     /**
@@ -27,7 +31,7 @@ public:
      * @return True on success, false on any failure.
      */
     [[nodiscard]] bool init(const char* windowTitle, int width, int height,
-                            Theme theme, float fontSize);
+                            Theme       theme, float     fontSize);
 
     /**
      * @brief Shuts down ImGui, SDL2 and destroys the OpenGL context.
@@ -38,28 +42,28 @@ public:
      * @brief Polls SDL events and begins a new ImGui frame.
      * @param running Set to false if the window close event is received.
      */
-    void beginFrame(bool& running);
+    void beginFrame(bool& running) const;
 
     /**
      * @brief Renders the ImGui draw data and swaps the SDL2 buffer.
      */
-    void endFrame();
+    void endFrame() const;
 
     /**
      * @brief Reloads the font atlas with the given size.
      * Must be called outside of a frame (before beginFrame).
      */
-    void loadFont(float size);
+    static void loadFont(float size);
 
     /**
      * @brief Applies a theme to the current ImGui style.
      */
-    void applyTheme(Theme theme) const;
+    static void applyTheme(Theme theme);
 
     [[nodiscard]] bool isInitialized() const { return m_initialized; }
 
 private:
     SDL_Window*   m_window      = nullptr;
-    SDL_GLContext m_glContext    = nullptr;
+    SDL_GLContext m_glContext   = nullptr;
     bool          m_initialized = false;
 };

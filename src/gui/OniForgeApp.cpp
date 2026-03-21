@@ -50,7 +50,7 @@ bool OniForgeApp::init() {
 void OniForgeApp::mainLoop() {
     while (m_running) {
         if (m_fontReloadPending) {
-            m_renderer.loadFont(m_pendingFontSize);
+            OniGuiRenderer::loadFont(m_pendingFontSize);
             m_fontReloadPending = false;
         }
 
@@ -112,10 +112,10 @@ void OniForgeApp::renderMenuBar() {
 
     if (ImGui::BeginMenu("Settings")) {
         if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { m_renderer.applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
-            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { m_renderer.applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { m_renderer.applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
-            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { m_renderer.applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
+            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { OniGuiRenderer::applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
+            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { OniGuiRenderer::applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
+            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { OniGuiRenderer::applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
+            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { OniGuiRenderer::applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
             ImGui::EndMenu();
         }
         ImGui::Separator();
