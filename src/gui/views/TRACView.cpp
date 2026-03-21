@@ -5,8 +5,10 @@
 #include <filesystem>
 #include <cstring>
 
-TRACView::TRACView(ProjectCatalogService& project)
-    : m_project(project) {
+TRACView::TRACView(const VanillaCatalogService& vanilla,
+                   ProjectCatalogService&       project)
+    : m_vanilla(vanilla)
+      , m_project(project) {
 }
 
 void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
@@ -42,12 +44,18 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Parent Collection:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth); {
-        char buf[256];
-        strncpy(buf, parentCollection.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##parentcollection", buf, sizeof(buf)))
-            parentCollection = buf;
+    ImGui::SetNextItemWidth(fieldWidth);
+    {
+        const std::string& current = parentCollection;
+        if (ImGui::BeginCombo("##parentcollection", current.c_str())) {
+            for (const auto& [path, data] : m_vanilla.getTracFiles()) {
+                const std::string name     = path.stem().string();
+                const bool        selected = (name == current);
+                if (ImGui::Selectable(name.c_str(), selected)) parentCollection = name;
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
     }
 
     ImGui::Spacing();
@@ -128,12 +136,19 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         ImGui::SameLine();
 
         // Animation field — fills remaining width
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x); {
-            char buf[256];
-            strncpy(buf, animation.c_str(), sizeof(buf) - 1);
-            buf[sizeof(buf) - 1] = '\0';
-            if (ImGui::InputText("##a", buf, sizeof(buf)))
-                animation = buf;
+        // Animation field — fills remaining width
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        {
+            const std::string& current = animation;
+            if (ImGui::BeginCombo("##a", current.c_str())) {
+                for (const auto& [path, data] : m_vanilla.getTracFiles()) {
+                    const std::string name     = path.stem().string();
+                    const bool        selected = (name == current);
+                    if (ImGui::Selectable(name.c_str(), selected)) animation = name;
+                    if (selected) ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
         }
 
         ImGui::PopID();

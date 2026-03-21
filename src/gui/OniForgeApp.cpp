@@ -18,7 +18,7 @@ OniForgeApp::OniForgeApp()
     , m_project(m_repos, m_vanilla, m_logger)
     , m_onccView(m_vanilla, m_project)
     , m_oncvView(m_vanilla, m_project)
-    , m_tracView(m_project)
+    , m_tracView(m_vanilla, m_project)
     , m_addFileModal(m_vanilla, m_project, m_logger) {}
 
 // ---------------------------------------------------------------------------
