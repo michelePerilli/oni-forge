@@ -25,8 +25,9 @@ const std::vector<const char*> TRAMView::s_varients = {
 // Constructor
 // ---------------------------------------------------------------------------
 
-TRAMView::TRAMView(ProjectCatalogService& project)
-    : m_project(project) {}
+TRAMView::TRAMView(const VanillaCatalogService& vanilla, ProjectCatalogService& project)
+    : m_vanilla(vanilla)
+    , m_project(project) {}
 
 // ---------------------------------------------------------------------------
 // Render
@@ -231,11 +232,19 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
         ImGui::SameLine(labelWidth);
         ImGui::SetNextItemWidth(fieldWidth);
         {
-            char buf[256];
-            strncpy(buf, tram.directAnimations[i].c_str(), sizeof(buf) - 1);
-            buf[sizeof(buf) - 1] = '\0';
-            if (ImGui::InputText("##link", buf, sizeof(buf)))
-                tram.directAnimations[i] = buf;
+            const std::string& current = tram.directAnimations[i];
+            if (ImGui::BeginCombo("##link", current.c_str())) {
+                if (ImGui::Selectable("(none)", current.empty()))
+                    tram.directAnimations[i] = "";
+                for (const auto& [path, data] : m_vanilla.getTramFiles()) {
+                    const std::string name    = path.stem().string();
+                    const bool        selected = (name == current);
+                    if (ImGui::Selectable(name.c_str(), selected))
+                        tram.directAnimations[i] = name;
+                    if (selected) ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
         }
         ImGui::PopID();
     }
