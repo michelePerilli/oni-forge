@@ -15,15 +15,14 @@
 class TRACView {
 public:
     explicit TRACView(const VanillaCatalogService& vanilla,
-                  ProjectCatalogService&       project);
+                      ProjectCatalogService&       project);
 
     void render(OniFile<TRAC::Root>& file, int selectedIndex);
-
     void onFileChanged() { m_selectedAnimIndices.clear(); }
 
 private:
     const VanillaCatalogService& m_vanilla;
-    ProjectCatalogService& m_project;
+    ProjectCatalogService&       m_project;
 
     std::unordered_map<int, std::filesystem::path> m_originalPaths;
     std::unordered_set<int>                        m_selectedAnimIndices;
