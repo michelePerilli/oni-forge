@@ -82,6 +82,7 @@ set(SOURCES
         src/repository/TRAMRepository.cpp
         src/service/ProjectCatalogService.cpp
         src/service/VanillaCatalogService.cpp
+        src/service/OniSplitService.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

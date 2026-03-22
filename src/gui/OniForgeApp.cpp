@@ -2,29 +2,41 @@
 
 #include <imgui.h>
 
+// ---------------------------------------------------------------------------
+// Constructor
+// ---------------------------------------------------------------------------
+
 OniForgeApp::OniForgeApp()
     : m_logger("oniforge.log")
-      , m_reader(m_logger)
-      , m_writer(m_logger)
-      , m_onccRepo(m_reader, m_writer, m_logger)
-      , m_oncvRepo(m_reader, m_writer, m_logger)
-      , m_tracRepo(m_reader, m_writer, m_logger)
-      , m_tramRepo(m_reader, m_writer, m_logger)
-      , m_repos{m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo}
-      , m_vanilla(m_repos, m_logger)
-      , m_project(m_repos, m_vanilla, m_logger)
-      , m_onccView(m_vanilla, m_project)
-      , m_oncvView(m_vanilla, m_project)
-      , m_tracView(m_vanilla, m_project)
-      , m_tramView(m_vanilla, m_project)
-      , m_addFileModal(m_vanilla, m_project, m_logger) {
-}
+    , m_reader(m_logger)
+    , m_writer(m_logger)
+    , m_onccRepo(m_reader, m_writer, m_logger)
+    , m_oncvRepo(m_reader, m_writer, m_logger)
+    , m_tracRepo(m_reader, m_writer, m_logger)
+    , m_tramRepo(m_reader, m_writer, m_logger)
+    , m_repos{ m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo }
+    , m_vanilla(m_repos, m_logger)
+    , m_project(m_repos, m_vanilla, m_logger)
+    , m_oniSplit(std::string(ONISPLIT_PATH), std::string(ONI_GAME_PATH))
+    , m_onccView(m_vanilla, m_project)
+    , m_oncvView(m_vanilla, m_project)
+    , m_tracView(m_vanilla, m_project)
+    , m_tramView(m_vanilla, m_project)
+    , m_addFileModal(m_vanilla, m_project, m_logger) {}
+
+// ---------------------------------------------------------------------------
+// Public
+// ---------------------------------------------------------------------------
 
 int OniForgeApp::run() {
     if (!init()) return 1;
     mainLoop();
     return 0;
 }
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
 
 bool OniForgeApp::init() {
     m_logger.separator();
@@ -51,16 +63,20 @@ void OniForgeApp::mainLoop() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+
 void OniForgeApp::render() {
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("##root", nullptr,
-                 ImGuiWindowFlags_NoTitleBar |
-                 ImGuiWindowFlags_NoResize |
-                 ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoScrollbar |
-                 ImGuiWindowFlags_MenuBar
+        ImGuiWindowFlags_NoTitleBar  |
+        ImGuiWindowFlags_NoResize    |
+        ImGuiWindowFlags_NoMove      |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_MenuBar
     );
 
     renderMenuBar();
@@ -81,6 +97,7 @@ void OniForgeApp::render() {
     ImGui::End();
 
     m_addFileModal.render();
+    renderTryInOniModal();
 }
 
 void OniForgeApp::renderMenuBar() {
@@ -95,24 +112,36 @@ void OniForgeApp::renderMenuBar() {
         ImGui::EndMenu();
     }
 
+    if (ImGui::BeginMenu("Project")) {
+        if (ImGui::MenuItem("Try in ONI")) {
+            m_tryInOniLog.clear();
+            m_tryInOniRunning = true;
+            m_tryInOniSuccess = false;
+            m_showTryInOniModal = true;
+
+            // Save project first
+            m_project.saveToFolder(std::string(PROJECT_PATH));
+            m_tryInOniLog.emplace_back("[OniForge] Project saved.");
+
+            // Run pipeline
+            m_tryInOniSuccess = m_oniSplit.tryInOni(
+                std::string(PROJECT_PATH),
+                std::string(TEMP_ONI_PATH),
+                [this](const std::string& line) {
+                    m_tryInOniLog.push_back(line);
+                }
+            );
+            m_tryInOniRunning = false;
+        }
+        ImGui::EndMenu();
+    }
+
     if (ImGui::BeginMenu("Settings")) {
         if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark", nullptr, m_currentTheme == Theme::Dark)) {
-                m_renderer.applyTheme(Theme::Dark);
-                m_currentTheme = Theme::Dark;
-            }
-            if (ImGui::MenuItem("Light", nullptr, m_currentTheme == Theme::Light)) {
-                m_renderer.applyTheme(Theme::Light);
-                m_currentTheme = Theme::Light;
-            }
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) {
-                m_renderer.applyTheme(Theme::Classic);
-                m_currentTheme = Theme::Classic;
-            }
-            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) {
-                m_renderer.applyTheme(Theme::Neutral);
-                m_currentTheme = Theme::Neutral;
-            }
+            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { m_renderer.applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
+            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { m_renderer.applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
+            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { m_renderer.applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
+            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { m_renderer.applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
             ImGui::EndMenu();
         }
         ImGui::Separator();
@@ -130,6 +159,54 @@ void OniForgeApp::renderMenuBar() {
     }
 
     ImGui::EndMenuBar();
+}
+
+void OniForgeApp::renderTryInOniModal() {
+    if (!m_showTryInOniModal) return;
+
+    ImGui::OpenPopup("Try in ONI");
+
+    const ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowSize({700, 450}, ImGuiCond_Always);
+    ImGui::SetNextWindowPos(
+        {io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f},
+        ImGuiCond_Always, {0.5f, 0.5f}
+    );
+
+    if (!ImGui::BeginPopupModal("Try in ONI", &m_showTryInOniModal,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+        return;
+
+    // Status header
+    if (m_tryInOniRunning) {
+        ImGui::TextUnformatted("Running...");
+    } else if (m_tryInOniSuccess) {
+        ImGui::TextColored({0.4f, 0.9f, 0.4f, 1.0f}, "Success!");
+    } else {
+        ImGui::TextColored({0.9f, 0.3f, 0.3f, 1.0f}, "Failed.");
+    }
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Scrollable log
+    ImGui::BeginChild("##log", {0, 350}, true, ImGuiWindowFlags_HorizontalScrollbar);
+    for (const auto& line : m_tryInOniLog)
+        ImGui::TextUnformatted(line.c_str());
+    // Auto-scroll to bottom
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+        ImGui::SetScrollHereY(1.0f);
+    ImGui::EndChild();
+
+    ImGui::Spacing();
+    if (!m_tryInOniRunning) {
+        if (ImGui::Button("Close", {120, 0})) {
+            m_showTryInOniModal = false;
+            ImGui::CloseCurrentPopup();
+        }
+    }
+
+    ImGui::EndPopup();
 }
 
 void OniForgeApp::renderLeftPanel() {

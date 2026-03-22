@@ -10,6 +10,7 @@
 #include "repository/OniRepositoryRegistry.hpp"
 #include "service/VanillaCatalogService.hpp"
 #include "service/ProjectCatalogService.hpp"
+#include "service/OniSplitService.hpp"
 #include "gui/OniGuiRenderer.hpp"
 #include "gui/OniForgeTheme.hpp"
 #include "gui/views/ONCCView.hpp"
@@ -19,7 +20,14 @@
 #include "gui/views/AddFileModal.hpp"
 
 #include <string>
+#include <vector>
 
+/**
+ * @brief Main application class for OniForge.
+ *
+ * Owns all domain dependencies, the renderer and the UI tabs.
+ * Responsible only for the main loop, left panel and menu bar.
+ */
 class OniForgeApp {
 public:
     OniForgeApp();
@@ -33,8 +41,11 @@ public:
     int run();
 
 private:
-    static constexpr std::string_view VANILLA_PATH = R"(D:\Dev\java\oniforge\vanilla\xml)";
-    static constexpr std::string_view PROJECT_PATH = R"(D:\Dev\mods\oni\TCTFagent)";
+    static constexpr std::string_view VANILLA_PATH  = R"(D:\Dev\java\oniforge\vanilla\xml)";
+    static constexpr std::string_view PROJECT_PATH  = R"(D:\Dev\mods\oni\TCTFagent)";
+    static constexpr std::string_view ONISPLIT_PATH = R"(D:\Dev\mods\oni\.tools\OniSplit.exe)";
+    static constexpr std::string_view ONI_GAME_PATH = R"(D:\Program Files (x86)\Oni\AE)";
+    static constexpr std::string_view TEMP_ONI_PATH = R"(D:\Dev\mods\oni\TCTFagent\_build)";
 
     static constexpr float       FONT_SIZES[]  = { 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f };
     static constexpr const char* FONT_LABELS[] = { "13",  "14",  "15",  "16",  "17",  "18"  };
@@ -54,6 +65,7 @@ private:
     // --- Services ---
     VanillaCatalogService m_vanilla;
     ProjectCatalogService m_project;
+    OniSplitService       m_oniSplit;
 
     // --- Renderer ---
     OniGuiRenderer m_renderer;
@@ -76,6 +88,12 @@ private:
     bool  m_fontReloadPending = false;
     float m_pendingFontSize   = 15.0f;
 
+    // --- Try in ONI modal state ---
+    bool                     m_showTryInOniModal = false;
+    bool                     m_tryInOniRunning   = false;
+    bool                     m_tryInOniSuccess   = false;
+    std::vector<std::string> m_tryInOniLog;
+
     // --- Lifecycle ---
     bool init();
     void mainLoop();
@@ -85,4 +103,5 @@ private:
     void renderMenuBar();
     void renderLeftPanel();
     void renderRightPanel();
+    void renderTryInOniModal();
 };
