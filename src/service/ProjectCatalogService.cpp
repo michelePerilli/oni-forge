@@ -106,6 +106,11 @@ void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath
         }
     }
 
+    for (const auto& [path, data] : m_tramFiles) {
+        if (OniFile out{folderPath / path.filename(), data}; !m_repos.tram.save(out))
+            m_logger.error("[ProjectCatalogService] error saving TRAM: " + path.filename().string());
+    }
+
     m_logger.info("[ProjectCatalogService] Project saved successfully.");
 }
 

@@ -50,8 +50,8 @@ struct Interpolation {
 // ---------------------------------------------------------------------------
 
 struct Overlay {
-    std::string usedBones;    // text content of <UsedBones>
-    std::string replacedBones; // text content of <ReplacedBones>
+    std::string usedBones;
+    std::string replacedBones;
 };
 
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ struct Particle {
     std::string start;
     std::string end;
     std::string bone;
-    std::string n;
+    std::string name;
 };
 
 // ---------------------------------------------------------------------------
@@ -91,45 +91,35 @@ struct Attack {
 };
 
 // ---------------------------------------------------------------------------
-// AnimationData — raw XML blobs, not user-editable
+// AnimationData — raw XML blobs, not user-editable.
 // Only present when the TRAM has inline animation data (no DAE import).
-// Order mirrors the XML file order exactly.
+// frameCount is computed at load time and never serialized to XML.
 // ---------------------------------------------------------------------------
 
 struct AnimationData {
-    std::string heights;       // raw XML content of <Heights>
-    std::string velocities;    // raw XML content of <Velocities>
-    std::string rotations;     // raw XML content of <Rotations>
-    std::string positionOffset;// raw XML content of <PositionOffset>
-    std::string positions;     // raw XML content of <Positions>
-    std::string attackRing;    // raw XML content of <AttackRing>
+    std::string heights;
+    std::string velocities;
+    std::string rotations;
+    std::string positionOffset;
+    std::string positions;
+    std::string attackRing;
+
+    int frameCount = 0;  // computed at load, NOT written to XML
 };
 
 // ---------------------------------------------------------------------------
-// Root — top-level TRAM file content
+// Root
 // ---------------------------------------------------------------------------
 
-/**
- * @brief Represents the full content of a TRAM file.
- *
- * The TRAM file has a single <Animation> block under <Oni>.
- * Editable fields are stored as typed members.
- * Raw animation data (Heights, Velocities, Rotations, Positions, AttackRing)
- * is stored as raw XML strings in AnimationData — it is not user-editable
- * and is swapped as a unit between TRAM files.
- *
- * importPath is set only when the file references an external .dae.
- * In that case, animationData will be empty.
- */
 struct Root {
-    std::optional<std::string> importPath;  // <Import Path="..."> if present
+    std::optional<std::string> importPath;
 
     Lookup      lookup;
     std::string flags;
     FrameRange  atomic;
     FrameRange  invulnerable;
     Overlay     overlay;
-    std::vector<std::string> directAnimations; // <DirectAnimations><Link>...</Link>
+    std::vector<std::string> directAnimations;
     Pause       pause;
     Interpolation interpolation;
     std::string finalRotation;
@@ -142,7 +132,6 @@ struct Root {
     std::string footsteps;
     std::string sounds;
 
-    // Raw animation data — present only if no DAE import
     std::optional<AnimationData> animationData;
 
     std::string throwSource;

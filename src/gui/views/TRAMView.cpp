@@ -1,6 +1,7 @@
 #include "gui/views/TRAMView.hpp"
 
 #include <imgui.h>
+#include <pugixml.hpp>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
@@ -213,6 +214,67 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
         buf[sizeof(buf) - 1] = '\0';
         if (ImGui::InputText("##invulend", buf, sizeof(buf)))
             tram.invulnerable.end = buf;
+    }
+
+    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+
+    // --- Animation Data ---
+    auto stripTram = [](const std::string& stem) -> std::string {
+        if (stem.starts_with("TRAM")) return stem.substr(4);
+        return stem;
+    };
+
+    const std::string currentAnimLabel = !m_selectedAnimName.empty()
+        ? m_selectedAnimName
+        : (tram.animationData ? stripTram(file.path.stem().string()) : "(DAE import)");
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Animation:");
+    ImGui::SameLine(labelWidth);
+    ImGui::SetNextItemWidth(fieldWidth);
+
+    {
+        static char animFilter[128] = {};
+        static bool animWasOpen     = false;
+
+        if (ImGui::BeginCombo("##animdata", currentAnimLabel.c_str())) {
+            if (!animWasOpen) { animFilter[0] = '\0'; animWasOpen = true; }
+
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##animfilter", animFilter, sizeof(animFilter));
+            ImGui::Separator();
+
+            const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+            ImGui::BeginChild("##animlist", {0, listHeight}, false);
+
+            for (const auto& [path, data] : m_vanilla.getTramFiles()) {
+                if (!data.animationData) continue;
+                const std::string name        = path.stem().string();
+                const std::string displayName = stripTram(name);
+                if (animFilter[0] != '\0' && displayName.find(animFilter) == std::string::npos)
+                    continue;
+                const bool selected = (m_selectedAnimName == displayName);
+                if (ImGui::Selectable(displayName.c_str(), selected)) {
+                    tram.animationData = data.animationData;
+                    tram.importPath    = std::nullopt;
+                    m_selectedAnimName = displayName;
+                    animFilter[0]      = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::EndChild();
+            ImGui::EndCombo();
+        } else {
+            animWasOpen = false;
+        }
+    }
+
+    // Show frame count from DTO — no XML parsing needed
+    if (tram.animationData && tram.animationData->frameCount > 0) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%d frames)", tram.animationData->frameCount);
     }
 
     ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();

@@ -27,14 +27,20 @@ struct XmlField {
 
 // Simple string element: <Tag>value</Tag>
 #define STR_FIELD(Tag, Member) \
-    { Tag, \
-      [](pugi::xml_node& n, const auto& o) { \
-          n.append_child(Tag).text().set(o.Member.c_str()); \
-      }, \
-      [](const pugi::xml_node& n, auto& o) { \
-          if (const auto c = n.child(Tag)) o.Member = c.text().as_string(); \
-      } \
-    }
+{ Tag, \
+[](pugi::xml_node& n, const auto& o) { \
+auto child = n.append_child(Tag); \
+if (!o.Member.empty()) child.text().set(o.Member.c_str()); \
+}, \
+[](const pugi::xml_node& n, auto& o) { \
+if (const auto c = n.child(Tag)) { \
+std::string val = c.text().as_string(); \
+const auto start = val.find_first_not_of(" \t\r\n"); \
+const auto end   = val.find_last_not_of(" \t\r\n"); \
+o.Member = (start == std::string::npos) ? "" : val.substr(start, end - start + 1); \
+} \
+} \
+}
 
 // String attribute: <Node attr="value">
 #define ATTR_FIELD(Attr, Member) \

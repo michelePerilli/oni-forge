@@ -19,12 +19,14 @@ public:
                       ProjectCatalogService&       project);
 
     void render(OniFile<TRAM::Root>& file, int selectedIndex);
+    void onFileChanged() { m_selectedAnimName.clear(); }
 
 private:
     const VanillaCatalogService& m_vanilla;
     ProjectCatalogService&       m_project;
 
     std::unordered_map<int, std::filesystem::path> m_originalPaths;
+    std::string                                    m_selectedAnimName;
 
     void saveWithRename(const OniFile<TRAM::Root>& file, int selectedIndex);
 

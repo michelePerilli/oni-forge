@@ -98,7 +98,7 @@ inline const std::vector<XmlField<TRAM::Particle>> particleFields = {
     STR_FIELD("Start", start),
     STR_FIELD("End",   end),
     STR_FIELD("Bone",  bone),
-    STR_FIELD("n",     n),
+    STR_FIELD("Name",  name),
 };
 
 // ---------------------------------------------------------------------------

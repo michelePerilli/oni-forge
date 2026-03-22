@@ -192,6 +192,7 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedOnccIndex = -1;
                     m_selectedOncvIndex = -1;
                     m_selectedTracIndex = -1;
+                    m_tramView.onFileChanged();
                 }
             }
         }
