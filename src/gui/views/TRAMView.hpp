@@ -19,6 +19,7 @@ public:
                       ProjectCatalogService&       project);
 
     void render(OniFile<TRAM::Root>& file, int selectedIndex);
+
     void onFileChanged() { m_selectedAnimName.clear(); }
 
 private:
@@ -30,11 +31,9 @@ private:
 
     void saveWithRename(const OniFile<TRAM::Root>& file, int selectedIndex);
 
-    static const std::vector<const char*> s_animTypes;
-    static const std::vector<const char*> s_states;
     static const std::vector<const char*> s_varients;
 
-    static void renderCombo(const char* label, std::string& value,
+    static void renderCombo(const char*                     label, std::string& value,
                             const std::vector<const char*>& items,
-                            float labelWidth, float fieldWidth);
+                            float                           labelWidth, float fieldWidth);
 };
