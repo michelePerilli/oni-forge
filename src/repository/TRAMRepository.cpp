@@ -65,7 +65,7 @@ std::optional<TRAM::Root> TRAMRepository::parseDocument(const XmlDocument& docum
 
     const bool hasImport = root.importPath.has_value();
     const bool hasData   = root.animationData.has_value();
-    m_logger.info("[TRAMRepository] Parsed TRAM — " +
+    m_logger.info("[TRAMRepository] Parsed TRAM - " +
                   std::string(hasImport ? "DAE import" : "inline data") +
                   (hasData ? " with animation data (" + std::to_string(root.animationData->frameCount) + " frames)" : ""));
     return root;

@@ -47,6 +47,12 @@ bool OniGuiRenderer::init(const char* windowTitle, const int width, const int he
         return false;
     }
 
+
+    if (SDL_Surface* icon = SDL_LoadBMP("assets/icon/icon.bmp")) {
+        SDL_SetWindowIcon(m_window, icon);
+        SDL_FreeSurface(icon);
+    }
+
     m_glContext = SDL_GL_CreateContext(m_window);
     if (!m_glContext) {
         printf("[ImGuiRenderer] SDL_GL_CreateContext error: %s\n", SDL_GetError());

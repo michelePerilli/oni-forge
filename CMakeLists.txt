@@ -86,6 +86,10 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+if (WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/assets/icon/app.rc)
+endif()
+
 if (MINGW)
     target_compile_options(${PROJECT_NAME} PRIVATE -Wa,-mbig-obj)
 endif()
