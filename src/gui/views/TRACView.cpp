@@ -14,7 +14,7 @@ TRACView::TRACView(const VanillaCatalogService& vanilla,
 void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-
+    ImGui::SeparatorText("TRAC");
     // Name + Save
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
@@ -32,7 +32,7 @@ void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedInde
     if (ImGui::Button("Save##trac", {60, 0}))
         saveWithRename(file, selectedIndex);
 
-    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+    ImGui::Spacing();
 
 }
 

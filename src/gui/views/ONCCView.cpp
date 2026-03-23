@@ -13,7 +13,7 @@ ONCCView::ONCCView(const VanillaCatalogService& vanilla,
 void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 120.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-
+    ImGui::SeparatorText("ONCC");
     // Name + Save
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
@@ -30,8 +30,7 @@ void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedInde
     ImGui::SameLine();
     if (ImGui::Button("Save##oncc", {60, 0}))
         saveWithRename(file, selectedIndex);
-
-    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+    ImGui::Spacing();
 }
 
 void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {

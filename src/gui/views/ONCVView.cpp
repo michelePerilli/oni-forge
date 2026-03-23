@@ -14,7 +14,7 @@ ONCVView::ONCVView(const VanillaCatalogService& vanilla,
 void ONCVView::renderHeaderRow(OniFile<ONCV::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-
+    ImGui::SeparatorText("ONCV");
     // Name + Save
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
@@ -31,8 +31,6 @@ void ONCVView::renderHeaderRow(OniFile<ONCV::Root>& file, const int selectedInde
     if (ImGui::Button("Save##oncv", {60, 0}))
         saveWithRename(file, selectedIndex);
 
-    ImGui::Spacing();
-    ImGui::Separator();
     ImGui::Spacing();
 }
 

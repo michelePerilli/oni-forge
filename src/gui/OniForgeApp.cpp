@@ -279,7 +279,6 @@ void OniForgeApp::renderRightPanel() {
         auto& files = const_cast<std::vector<OniFile<ONCC::Root>>&>(m_project.getOnccFiles());
         auto& file  = files[m_selectedOnccIndex];
         m_onccView.renderHeaderRow(file, m_selectedOnccIndex);
-        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
                 m_onccView.render(file, m_selectedOnccIndex);
@@ -295,7 +294,6 @@ void OniForgeApp::renderRightPanel() {
         auto& files = const_cast<std::vector<OniFile<ONCV::Root>>&>(m_project.getOncvFiles());
         auto& file  = files[m_selectedOncvIndex];
         m_oncvView.renderHeaderRow(file, m_selectedOncvIndex);
-        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
                 m_oncvView.render(file, m_selectedOncvIndex);
@@ -311,7 +309,6 @@ void OniForgeApp::renderRightPanel() {
         auto& files = const_cast<std::vector<OniFile<TRAC::Root>>&>(m_project.getTracFiles());
         auto& file  = files[m_selectedTracIndex];
         m_tracView.renderHeaderRow(file, m_selectedTracIndex);
-        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
                 m_tracView.render(file, m_selectedTracIndex);
@@ -327,7 +324,6 @@ void OniForgeApp::renderRightPanel() {
         auto& files = const_cast<std::vector<OniFile<TRAM::Root>>&>(m_project.getTramFiles());
         auto& file  = files[m_selectedTramIndex];
         m_tramView.renderHeaderRow(file, m_selectedTramIndex);
-        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("Animation")) {
                 m_tramView.render(file, m_selectedTramIndex);

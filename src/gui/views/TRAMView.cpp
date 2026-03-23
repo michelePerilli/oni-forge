@@ -36,7 +36,7 @@ TRAMView::TRAMView(const VanillaCatalogService& vanilla, ProjectCatalogService& 
 void TRAMView::renderHeaderRow(OniFile<TRAM::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-
+    ImGui::SeparatorText("TRAM");
     // --- Name + Save ---
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
@@ -53,8 +53,6 @@ void TRAMView::renderHeaderRow(OniFile<TRAM::Root>& file, const int selectedInde
     if (ImGui::Button("Save##tram", {60, 0}))
         saveWithRename(file, selectedIndex);
 
-    ImGui::Spacing();
-    ImGui::Separator();
     ImGui::Spacing();
 }
 
