@@ -367,6 +367,7 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
                     if (ImGui::Selectable(name.c_str(), selected)) {
                         tram.directAnimations[i] = name;
                         filter[i][0]             = '\0';
+                        ImGui::CloseCurrentPopup();
                     }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }

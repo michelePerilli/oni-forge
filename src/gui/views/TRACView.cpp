@@ -9,7 +9,8 @@
 TRACView::TRACView(const VanillaCatalogService& vanilla,
                    ProjectCatalogService&       project)
     : m_vanilla(vanilla)
-    , m_project(project) {}
+      , m_project(project) {
+}
 
 void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
@@ -19,9 +20,8 @@ void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedInde
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth);
-    {
-        char buf[256];
+    ImGui::SetNextItemWidth(fieldWidth); {
+        char              buf[256];
         const std::string stem = file.path.stem().string();
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
@@ -33,7 +33,6 @@ void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedInde
         saveWithRename(file, selectedIndex);
 
     ImGui::Spacing();
-
 }
 
 void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
@@ -49,21 +48,43 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Parent Collection:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth);
-    {
+    ImGui::SetNextItemWidth(fieldWidth); {
         const std::string& current = parentCollection;
+        static bool        wasOpen = false;
         if (ImGui::BeginCombo("##parentcollection", current.c_str())) {
-            for (const auto& [path, data] : m_vanilla.getTracFiles()) {
-                const std::string name     = path.stem().string();
-                const bool        selected = (name == current);
-                if (ImGui::Selectable(name.c_str(), selected)) parentCollection = name;
+            static char filter[128] = {};
+            if (!wasOpen) {
+                filter[0] = '\0';
+                wasOpen   = true;
+            }
+
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##filter", filter, sizeof(filter));
+            ImGui::Separator();
+
+            const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+            ImGui::BeginChild("##list", {0, listHeight}, false);
+            for (const auto& [path, data]: m_vanilla.getTracFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                const bool selected = (name == current);
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    parentCollection = name;
+                    filter[0]        = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
                 if (selected) ImGui::SetItemDefaultFocus();
             }
+            ImGui::EndChild();
             ImGui::EndCombo();
+        } else {
+            wasOpen = false;
         }
     }
-
-    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     // --- Animations header ---
     const int  animCount   = static_cast<int>(animations.size());
@@ -80,7 +101,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - btnWidth * 2 - 8.0f);
 
     if (ImGui::Button("+ Add", {btnWidth, 0})) {
-        animations.push_back({ "1", "" });
+        animations.push_back({"1", ""});
         m_selectedAnimIndices.clear();
         m_selectedAnimIndices.insert(animCount);
     }
@@ -90,7 +111,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     if (ImGui::Button("Delete", {btnWidth, 0})) {
         std::vector<int> toRemove(m_selectedAnimIndices.begin(), m_selectedAnimIndices.end());
         std::ranges::sort(toRemove, std::greater<int>());
-        for (const int idx : toRemove)
+        for (const int idx: toRemove)
             if (idx < static_cast<int>(animations.size()))
                 animations.erase(animations.begin() + idx);
         m_selectedAnimIndices.clear();
@@ -115,7 +136,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
 
     // Count occurrences for duplicate detection
     std::unordered_map<std::string, int> animOccurrences;
-    for (const auto& a : animations)
+    for (const auto& a: animations)
         animOccurrences[a.animation]++;
 
     for (int i = 0; i < static_cast<int>(animations.size()); ++i) {
@@ -126,13 +147,12 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         bool checked = m_selectedAnimIndices.contains(i);
         if (ImGui::Checkbox("##sel", &checked)) {
             if (checked) m_selectedAnimIndices.insert(i);
-            else         m_selectedAnimIndices.erase(i);
+            else m_selectedAnimIndices.erase(i);
         }
         ImGui::SameLine();
 
         // Weight field
-        ImGui::SetNextItemWidth(weightWidth);
-        {
+        ImGui::SetNextItemWidth(weightWidth); {
             char buf[32];
             strncpy(buf, anim.weight.c_str(), sizeof(buf) - 1);
             buf[sizeof(buf) - 1] = '\0';
@@ -144,21 +164,44 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         // Animation combo — red if duplicate
         const bool isDuplicate = !anim.animation.empty() && animOccurrences[anim.animation] > 1;
         if (isDuplicate) {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg,        ImVec4(0.5f, 0.1f, 0.1f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.5f, 0.1f, 0.1f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.6f, 0.15f, 0.15f, 1.0f));
         }
 
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        {
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x); {
             const std::string& current = anim.animation;
+            static bool        wasOpen = false;
             if (ImGui::BeginCombo("##a", current.c_str())) {
-                for (const auto& [path, data] : m_vanilla.getTracFiles()) {
-                    const std::string name     = path.stem().string();
-                    const bool        selected = (name == current);
-                    if (ImGui::Selectable(name.c_str(), selected)) anim.animation = name;
+                static char filter[128] = {};
+                if (!wasOpen) {
+                    filter[0] = '\0';
+                    wasOpen   = true;
+                }
+
+                ImGui::SetNextItemWidth(-1);
+                ImGui::InputText("##filter", filter, sizeof(filter));
+                ImGui::Separator();
+
+                const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+                ImGui::BeginChild("##list", {0, listHeight}, false);
+
+                for (const auto& [path, data]: m_vanilla.getTramFiles()) {
+                    const std::string name = path.stem().string();
+                    if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                        continue;
+                    const bool selected = (name == current);
+                    if (ImGui::Selectable(name.c_str(), selected)) {
+                        anim.animation = name;
+                        filter[0]      = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
+
+                ImGui::EndChild();
                 ImGui::EndCombo();
+            } else {
+                wasOpen = false;
             }
         }
 
