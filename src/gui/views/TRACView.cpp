@@ -70,13 +70,13 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) {
                     current = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
-                if (selected) ImGui::SetItemDefaultFocus();
             }
 
             // Vanilla files
@@ -85,13 +85,13 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) {
                     current = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
-                if (selected) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndChild();
             ImGui::EndCombo();
@@ -208,13 +208,13 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
                     const std::string name = path.stem().string();
                     if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                         continue;
-                    const bool selected = (name == current);
+                    if (name == current) continue; // Hide currently selected item
+                    const bool selected = false; // Since we hide the current, it's not in the list
                     if (ImGui::Selectable(name.c_str(), selected)) {
                         current = name;
                         filter[0] = '\0';
                         ImGui::CloseCurrentPopup();
                     }
-                    if (selected) ImGui::SetItemDefaultFocus();
                 }
 
                 // Vanilla files
@@ -223,13 +223,13 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
                     const std::string name = path.stem().string();
                     if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                         continue;
-                    const bool selected = (name == current);
+                    if (name == current) continue; // Hide currently selected item
+                    const bool selected = false; // Since we hide the current, it's not in the list
                     if (ImGui::Selectable(name.c_str(), selected)) {
                         current = name;
                         filter[0] = '\0';
                         ImGui::CloseCurrentPopup();
                     }
-                    if (selected) ImGui::SetItemDefaultFocus();
                 }
 
                 ImGui::EndChild();

@@ -359,17 +359,34 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
                     tram.directAnimations[i] = "";
                     filter[i][0]             = '\0';
                 }
-                for (const auto& [path, data]: m_vanilla.getTramFiles()) {
+                // Project files
+                ImGui::SeparatorText("Project");
+                for (const auto& [path, data]: m_project.getTramFiles()) {
                     const std::string name = path.stem().string();
                     if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
                         continue;
-                    const bool selected = (name == current);
+                    if (name == current) continue; // Hide currently selected item
+                    const bool selected = false; // Since we hide the current, it's not in the list
                     if (ImGui::Selectable(name.c_str(), selected)) {
                         tram.directAnimations[i] = name;
                         filter[i][0]             = '\0';
                         ImGui::CloseCurrentPopup();
                     }
-                    if (selected) ImGui::SetItemDefaultFocus();
+                }
+
+                // Vanilla files
+                ImGui::SeparatorText("Vanilla");
+                for (const auto& [path, data]: m_vanilla.getTramFiles()) {
+                    const std::string name = path.stem().string();
+                    if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
+                        continue;
+                    if (name == current) continue; // Hide currently selected item
+                    const bool selected = false; // Since we hide the current, it's not in the list
+                    if (ImGui::Selectable(name.c_str(), selected)) {
+                        tram.directAnimations[i] = name;
+                        filter[i][0]             = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
                 ImGui::EndChild();
                 ImGui::EndCombo();

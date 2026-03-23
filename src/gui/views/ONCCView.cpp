@@ -47,17 +47,57 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Variant:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth);
-    {
-        const auto names = getVanillaOncvNames();
-        const std::string& current = oncc.variant;
+    ImGui::SetNextItemWidth(fieldWidth); {
+        std::string& current = oncc.variant;
+        static bool wasOpen = false;
         if (ImGui::BeginCombo("##variant", current.c_str())) {
-            for (const auto& name : names) {
-                const bool selected = (name == current);
-                if (ImGui::Selectable(name.c_str(), selected)) oncc.variant = name;
-                if (selected) ImGui::SetItemDefaultFocus();
+            static char filter[128] = {};
+            if (!wasOpen) {
+                filter[0] = '\0';
+                wasOpen   = true;
             }
+
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##variantfilter", filter, sizeof(filter));
+            ImGui::Separator();
+
+            const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+            ImGui::BeginChild("##variantlist", {0, listHeight}, false);
+
+            // Project files
+            ImGui::SeparatorText("Project");
+            for (const auto& [path, data] : m_project.getOncvFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false;
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    current = name;
+                    filter[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            // Vanilla files
+            ImGui::SeparatorText("Vanilla");
+            for (const auto& [path, data] : m_vanilla.getOncvFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false;
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    current = name;
+                    filter[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndChild();
             ImGui::EndCombo();
+        } else {
+            wasOpen = false;
         }
     }
 
@@ -65,17 +105,57 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Animations:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth);
-    {
-        const auto names = getVanillaTracNames();
-        const std::string& current = oncc.animations;
+    ImGui::SetNextItemWidth(fieldWidth); {
+        std::string& current = oncc.animations;
+        static bool wasOpen = false;
         if (ImGui::BeginCombo("##animations", current.c_str())) {
-            for (const auto& name : names) {
-                const bool selected = (name == current);
-                if (ImGui::Selectable(name.c_str(), selected)) oncc.animations = name;
-                if (selected) ImGui::SetItemDefaultFocus();
+            static char filter[128] = {};
+            if (!wasOpen) {
+                filter[0] = '\0';
+                wasOpen   = true;
             }
+
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##animationsfilter", filter, sizeof(filter));
+            ImGui::Separator();
+
+            const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+            ImGui::BeginChild("##animationslist", {0, listHeight}, false);
+
+            // Project files
+            ImGui::SeparatorText("Project");
+            for (const auto& [path, data] : m_project.getTracFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false;
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    current = name;
+                    filter[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            // Vanilla files
+            ImGui::SeparatorText("Vanilla");
+            for (const auto& [path, data] : m_vanilla.getTracFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false;
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    current = name;
+                    filter[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndChild();
             ImGui::EndCombo();
+        } else {
+            wasOpen = false;
         }
     }
 

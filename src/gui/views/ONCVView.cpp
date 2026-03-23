@@ -72,13 +72,13 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
                     continue;
                 if (name == file.path.stem().string())
                     continue;
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) {
                     current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
-                if (selected) ImGui::SetItemDefaultFocus();
             }
 
             // Vanilla files
@@ -89,13 +89,13 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
                     continue;
                 if (name == file.path.stem().string())
                     continue;
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) {
                     current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
-                if (selected) ImGui::SetItemDefaultFocus();
             }
 
             ImGui::EndChild();
@@ -115,9 +115,9 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
         const std::string& current = characterClass;
         if (ImGui::BeginCombo("##characterclass", current.c_str())) {
             for (const auto& name: names) {
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) characterClass = name;
-                if (selected) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
         }
@@ -132,9 +132,9 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
         const std::string& current = characterClassHard;
         if (ImGui::BeginCombo("##characterclasshard", current.c_str())) {
             for (const auto& name: names) {
-                const bool selected = (name == current);
+                if (name == current) continue; // Hide currently selected item
+                const bool selected = false; // Since we hide the current, it's not in the list
                 if (ImGui::Selectable(name.c_str(), selected)) characterClassHard = name;
-                if (selected) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
         }
