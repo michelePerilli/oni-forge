@@ -375,6 +375,22 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
         }
         ImGui::PopID();
     }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // --- Impact ---
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Impact:");
+    ImGui::SameLine(labelWidth);
+    ImGui::SetNextItemWidth(fieldWidth); {
+        char buf[256];
+        strncpy(buf, tram.impact.c_str(), sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+        if (ImGui::InputText("##impact", buf, sizeof(buf)))
+            tram.impact = buf;
+    }
 }
 
 // ---------------------------------------------------------------------------
