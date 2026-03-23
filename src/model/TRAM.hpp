@@ -36,6 +36,19 @@ namespace TRAM {
     };
 
     // ---------------------------------------------------------------------------
+    // Bones — 19 body parts, used in Particle, MotionBlur, Overlay, Attack
+    // ---------------------------------------------------------------------------
+
+    inline const std::vector<const char*> bones = {
+        "Pelvis",
+        "LeftThigh", "LeftCalf", "LeftFoot",
+        "RightThigh", "RightCalf", "RightFoot",
+        "Mid", "Chest", "Neck", "Head",
+        "LeftShoulder", "LeftArm", "LeftWrist", "LeftFist",
+        "RightShoulder", "RightArm", "RightWrist", "RightFist",
+    };
+
+    // ---------------------------------------------------------------------------
     // Animation types
     // ---------------------------------------------------------------------------
 
