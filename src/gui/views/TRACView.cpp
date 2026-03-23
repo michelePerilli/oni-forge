@@ -49,7 +49,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     ImGui::TextUnformatted("Parent Collection:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
-        const std::string& current = parentCollection;
+        std::string& current = parentCollection;
         static bool        wasOpen = false;
         if (ImGui::BeginCombo("##parentcollection", current.c_str())) {
             static char filter[128] = {};
@@ -64,14 +64,31 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
 
             const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
             ImGui::BeginChild("##list", {0, listHeight}, false);
-            for (const auto& [path, data]: m_vanilla.getTracFiles()) {
+            // Project files
+            ImGui::SeparatorText("Project");
+            for (const auto& [path, data] : m_project.getTracFiles()) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
                 const bool selected = (name == current);
                 if (ImGui::Selectable(name.c_str(), selected)) {
-                    parentCollection = name;
-                    filter[0]        = '\0';
+                    current = name;
+                    filter[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+
+            // Vanilla files
+            ImGui::SeparatorText("Vanilla");
+            for (const auto& [path, data] : m_vanilla.getTracFiles()) {
+                const std::string name = path.stem().string();
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                    continue;
+                const bool selected = (name == current);
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    current = name;
+                    filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
                 if (selected) ImGui::SetItemDefaultFocus();
@@ -169,7 +186,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         }
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x); {
-            const std::string& current = anim.animation;
+            std::string& current = anim.animation;
             static bool        wasOpen = false;
             if (ImGui::BeginCombo("##a", current.c_str())) {
                 static char filter[128] = {};
@@ -185,14 +202,31 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
                 const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
                 ImGui::BeginChild("##list", {0, listHeight}, false);
 
-                for (const auto& [path, data]: m_vanilla.getTramFiles()) {
+                // Project files
+                ImGui::SeparatorText("Project");
+                for (const auto& [path, data] : m_project.getTramFiles()) {
                     const std::string name = path.stem().string();
                     if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                         continue;
                     const bool selected = (name == current);
                     if (ImGui::Selectable(name.c_str(), selected)) {
-                        anim.animation = name;
-                        filter[0]      = '\0';
+                        current = name;
+                        filter[0] = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
+                    if (selected) ImGui::SetItemDefaultFocus();
+                }
+
+                // Vanilla files
+                ImGui::SeparatorText("Vanilla");
+                for (const auto& [path, data] : m_vanilla.getTramFiles()) {
+                    const std::string name = path.stem().string();
+                    if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                        continue;
+                    const bool selected = (name == current);
+                    if (ImGui::Selectable(name.c_str(), selected)) {
+                        current = name;
+                        filter[0] = '\0';
                         ImGui::CloseCurrentPopup();
                     }
                     if (selected) ImGui::SetItemDefaultFocus();
