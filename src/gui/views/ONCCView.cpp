@@ -10,13 +10,7 @@ ONCCView::ONCCView(const VanillaCatalogService& vanilla,
     : m_vanilla(vanilla)
     , m_project(project) {}
 
-void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
-    // Snapshot path on first encounter of this index
-    if (!m_originalPaths.contains(selectedIndex))
-        m_originalPaths[selectedIndex] = file.path;
-
-    ONCC::ONCC& oncc = file.data.oncc;
-
+void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 120.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
@@ -38,6 +32,17 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
         saveWithRename(file, selectedIndex);
 
     ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+}
+
+void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
+    // Snapshot path on first encounter of this index
+    if (!m_originalPaths.contains(selectedIndex))
+        m_originalPaths[selectedIndex] = file.path;
+
+    ONCC::ONCC& oncc = file.data.oncc;
+
+    constexpr float labelWidth = 120.0f;
+    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
     // Variant
     ImGui::AlignTextToFramePadding();

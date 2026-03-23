@@ -17,7 +17,7 @@ class ONCCView {
 public:
     explicit ONCCView(const VanillaCatalogService& vanilla,
                       ProjectCatalogService&       project);
-
+    void renderHeaderRow(OniFile<ONCC::Root>& file, int selectedIndex);
     void render(OniFile<ONCC::Root>& file, int selectedIndex);
 
 private:

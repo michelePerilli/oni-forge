@@ -115,21 +115,17 @@ void OniForgeApp::renderMenuBar() {
     if (ImGui::BeginMenu("Project")) {
         if (ImGui::MenuItem("Try in ONI")) {
             m_tryInOniLog.clear();
-            m_tryInOniRunning = true;
-            m_tryInOniSuccess = false;
+            m_tryInOniRunning   = true;
+            m_tryInOniSuccess   = false;
             m_showTryInOniModal = true;
 
-            // Save project first
             m_project.saveToFolder(std::string(PROJECT_PATH));
             m_tryInOniLog.emplace_back("[OniForge] Project saved.");
 
-            // Run pipeline
             m_tryInOniSuccess = m_oniSplit.tryInOni(
                 std::string(PROJECT_PATH),
                 std::string(TEMP_ONI_PATH),
-                [this](const std::string& line) {
-                    m_tryInOniLog.push_back(line);
-                }
+                [this](const std::string& line) { m_tryInOniLog.push_back(line); }
             );
             m_tryInOniRunning = false;
         }
@@ -177,23 +173,19 @@ void OniForgeApp::renderTryInOniModal() {
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
         return;
 
-    // Status header
-    if (m_tryInOniRunning) {
+    if (m_tryInOniRunning)
         ImGui::TextUnformatted("Running...");
-    } else if (m_tryInOniSuccess) {
+    else if (m_tryInOniSuccess)
         ImGui::TextColored({0.4f, 0.9f, 0.4f, 1.0f}, "Success!");
-    } else {
+    else
         ImGui::TextColored({0.9f, 0.3f, 0.3f, 1.0f}, "Failed.");
-    }
 
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Scrollable log
     ImGui::BeginChild("##log", {0, 350}, true, ImGuiWindowFlags_HorizontalScrollbar);
     for (const auto& line : m_tryInOniLog)
         ImGui::TextUnformatted(line.c_str());
-    // Auto-scroll to bottom
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
         ImGui::SetScrollHereY(1.0f);
     ImGui::EndChild();
@@ -285,9 +277,12 @@ void OniForgeApp::renderRightPanel() {
     if (m_selectedOnccIndex >= 0 &&
         m_selectedOnccIndex < static_cast<int>(m_project.getOnccFiles().size())) {
         auto& files = const_cast<std::vector<OniFile<ONCC::Root>>&>(m_project.getOnccFiles());
+        auto& file  = files[m_selectedOnccIndex];
+        m_onccView.renderHeaderRow(file, m_selectedOnccIndex);
+        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
-                m_onccView.render(files[m_selectedOnccIndex], m_selectedOnccIndex);
+                m_onccView.render(file, m_selectedOnccIndex);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -298,9 +293,12 @@ void OniForgeApp::renderRightPanel() {
     if (m_selectedOncvIndex >= 0 &&
         m_selectedOncvIndex < static_cast<int>(m_project.getOncvFiles().size())) {
         auto& files = const_cast<std::vector<OniFile<ONCV::Root>>&>(m_project.getOncvFiles());
+        auto& file  = files[m_selectedOncvIndex];
+        m_oncvView.renderHeaderRow(file, m_selectedOncvIndex);
+        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
-                m_oncvView.render(files[m_selectedOncvIndex], m_selectedOncvIndex);
+                m_oncvView.render(file, m_selectedOncvIndex);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -311,9 +309,12 @@ void OniForgeApp::renderRightPanel() {
     if (m_selectedTracIndex >= 0 &&
         m_selectedTracIndex < static_cast<int>(m_project.getTracFiles().size())) {
         auto& files = const_cast<std::vector<OniFile<TRAC::Root>>&>(m_project.getTracFiles());
+        auto& file  = files[m_selectedTracIndex];
+        m_tracView.renderHeaderRow(file, m_selectedTracIndex);
+        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("General")) {
-                m_tracView.render(files[m_selectedTracIndex], m_selectedTracIndex);
+                m_tracView.render(file, m_selectedTracIndex);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -324,9 +325,12 @@ void OniForgeApp::renderRightPanel() {
     if (m_selectedTramIndex >= 0 &&
         m_selectedTramIndex < static_cast<int>(m_project.getTramFiles().size())) {
         auto& files = const_cast<std::vector<OniFile<TRAM::Root>>&>(m_project.getTramFiles());
+        auto& file  = files[m_selectedTramIndex];
+        m_tramView.renderHeaderRow(file, m_selectedTramIndex);
+        ImGui::Separator();
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("Animation")) {
-                m_tramView.render(files[m_selectedTramIndex], m_selectedTramIndex);
+                m_tramView.render(file, m_selectedTramIndex);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();

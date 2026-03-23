@@ -33,12 +33,7 @@ TRAMView::TRAMView(const VanillaCatalogService& vanilla, ProjectCatalogService& 
 // Render
 // ---------------------------------------------------------------------------
 
-void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
-    if (!m_originalPaths.contains(selectedIndex))
-        m_originalPaths[selectedIndex] = file.path;
-
-    TRAM::Root& tram = file.data;
-
+void TRAMView::renderHeaderRow(OniFile<TRAM::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
@@ -61,6 +56,16 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
+}
+
+void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
+    if (!m_originalPaths.contains(selectedIndex))
+        m_originalPaths[selectedIndex] = file.path;
+
+    TRAM::Root& tram = file.data;
+
+    constexpr float labelWidth = 140.0f;
+    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
     // --- Import path (read-only info) ---
     if (tram.importPath) {

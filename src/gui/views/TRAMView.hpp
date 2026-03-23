@@ -19,7 +19,7 @@ public:
                       ProjectCatalogService&       project);
 
     void render(OniFile<TRAM::Root>& file, int selectedIndex);
-
+    void renderHeaderRow(OniFile<TRAM::Root>& file, int selectedIndex);
     void onFileChanged() { m_selectedAnimName.clear(); }
 
 private:

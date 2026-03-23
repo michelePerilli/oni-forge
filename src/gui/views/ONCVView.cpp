@@ -11,12 +11,7 @@ ONCVView::ONCVView(const VanillaCatalogService& vanilla,
       , m_project(project) {
 }
 
-void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
-    if (!m_originalPaths.contains(selectedIndex))
-        m_originalPaths[selectedIndex] = file.path;
-
-    auto& [id, parentVariant, characterClass, characterClassHard] = file.data;
-
+void ONCVView::renderHeaderRow(OniFile<ONCV::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
@@ -39,6 +34,16 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
+}
+
+void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
+    if (!m_originalPaths.contains(selectedIndex))
+        m_originalPaths[selectedIndex] = file.path;
+
+    auto& [id, parentVariant, characterClass, characterClassHard] = file.data;
+
+    constexpr float labelWidth = 140.0f;
+    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
     // Parent Variant
     ImGui::AlignTextToFramePadding();

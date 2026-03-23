@@ -17,7 +17,7 @@ class ONCVView {
 public:
     explicit ONCVView(const VanillaCatalogService& vanilla,
                       ProjectCatalogService&       project);
-
+    void renderHeaderRow(OniFile<ONCV::Root>& file, int selectedIndex);
     void render(OniFile<ONCV::Root>& file, int selectedIndex);
 
 private:

@@ -11,12 +11,7 @@ TRACView::TRACView(const VanillaCatalogService& vanilla,
     : m_vanilla(vanilla)
     , m_project(project) {}
 
-void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
-    if (!m_originalPaths.contains(selectedIndex))
-        m_originalPaths[selectedIndex] = file.path;
-
-    auto& [id, parentCollection, animations] = file.data;
-
+void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
@@ -38,6 +33,17 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         saveWithRename(file, selectedIndex);
 
     ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+
+}
+
+void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
+    if (!m_originalPaths.contains(selectedIndex))
+        m_originalPaths[selectedIndex] = file.path;
+
+    auto& [id, parentCollection, animations] = file.data;
+
+    constexpr float labelWidth = 140.0f;
+    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
     // Parent Collection — combo with vanilla TRAC list
     ImGui::AlignTextToFramePadding();

@@ -17,6 +17,7 @@ public:
     explicit TRACView(const VanillaCatalogService& vanilla,
                       ProjectCatalogService&       project);
 
+    void renderHeaderRow(OniFile<TRAC::Root>& file, int selectedIndex);
     void render(OniFile<TRAC::Root>& file, int selectedIndex);
     void onFileChanged() { m_selectedAnimIndices.clear(); }
 
