@@ -125,6 +125,7 @@ void OniForgeApp::renderMenuBar() {
             m_tryInOniSuccess = m_oniSplit.tryInOni(
                 std::string(PROJECT_PATH),
                 std::string(TEMP_ONI_PATH),
+                false, 
                 [this](const std::string& line) { m_tryInOniLog.push_back(line); }
             );
             m_tryInOniRunning = false;

@@ -27,11 +27,13 @@ public:
      * @brief Runs the full "Try in ONI" pipeline.
      * @param projectXmlPath  Folder containing the mod XML files.
      * @param tempOniPath     Temp folder where .oni files will be written.
+     * @param useSep          If true, uses -import:sep (Mac/PC Demo). Else -import:nosep (PC Retail).
      * @param onOutput        Called for each line of OniSplit output.
      * @return true if all steps succeeded.
      */
     bool tryInOni(const std::filesystem::path& projectXmlPath,
                   const std::filesystem::path& tempOniPath,
+                  bool                         useSep,
                   const OutputCallback&        onOutput) const;
 
 private:
@@ -51,6 +53,7 @@ private:
 
     bool packageDat(const std::filesystem::path& oniPath,
                     const std::filesystem::path& datPath,
+                    bool                         useSep,
                     const OutputCallback&        onOutput) const;
 
     bool copyDat(const std::filesystem::path& datPath,

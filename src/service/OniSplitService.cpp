@@ -22,6 +22,7 @@ OniSplitService::OniSplitService(const std::string& oniSplitPath,
 
 bool OniSplitService::tryInOni(const std::filesystem::path& projectXmlPath,
                                const std::filesystem::path& tempOniPath,
+                               bool                         useSep,
                                const OutputCallback&        onOutput) const {
     // Ensure temp folder exists
     std::error_code ec;
@@ -40,7 +41,7 @@ bool OniSplitService::tryInOni(const std::filesystem::path& projectXmlPath,
     }
 
     onOutput("[OniSplit] Step 2/4 — Packaging DAT...");
-    if (!packageDat(tempOniPath, datPath, onOutput)) {
+    if (!packageDat(tempOniPath, datPath, useSep, onOutput)) {
         onOutput("[OniSplit] FAILED at step 2.");
         return false;
     }
@@ -77,9 +78,11 @@ bool OniSplitService::convertXmlToOni(const std::filesystem::path& xmlPath,
 
 bool OniSplitService::packageDat(const std::filesystem::path& oniPath,
                                  const std::filesystem::path& datPath,
+                                 bool                         useSep,
                                  const OutputCallback&        onOutput) const {
+    const std::string importFlag = useSep ? "-import:sep" : "-import:nosep";
     const std::string cmd =
-        "\"" + m_oniSplitPath.string() + "\" -import:nosep"
+        "\"" + m_oniSplitPath.string() + "\" " + importFlag +
         " \"" + oniPath.string() + "\""
         " \"" + datPath.string() + "\"";
     return runProcess(cmd, onOutput);
@@ -114,7 +117,6 @@ bool OniSplitService::launchOni(const OutputCallback& onOutput) const {
     }
 
 #ifdef _WIN32
-#include <windows.h>
     const HINSTANCE result = ShellExecuteW(
         nullptr, L"open",
         oniExe.wstring().c_str(),
