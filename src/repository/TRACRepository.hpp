@@ -48,5 +48,10 @@ private:
      */
     [[nodiscard]] std::optional<TRAC::Root> parseDocument(const XmlDocument& document) const;
 
-    [[nodiscard]] static XmlDocument buildDocument(const TRAC::Root& root) ;
+    /**
+     * @brief Serializes a TRAC struct into a new XmlDocument.
+     * @param root The TRAC struct to serialize.
+     * @return A populated XmlDocument ready to be written to disk.
+     */
+    [[nodiscard]] static XmlDocument buildDocument(const TRAC::Root& root);
 };

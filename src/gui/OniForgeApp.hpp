@@ -25,19 +25,29 @@
 /**
  * @brief Main application class for OniForge.
  *
- * Owns all domain dependencies, the renderer and the UI tabs.
- * Responsible only for the main loop, left panel and menu bar.
+ * This class serves as the composition root of the application.
+ * It owns all domain dependencies, the renderer, and the UI tabs.
+ * It is responsible for the main loop, top-level layout, and coordinating
+ * interactions between services and views.
  */
 class OniForgeApp {
 public:
     OniForgeApp();
     ~OniForgeApp() = default;
 
+    // Non-copyable, non-movable (owns unique resources like SDL window)
     OniForgeApp(const OniForgeApp&) = delete;
     OniForgeApp& operator=(const OniForgeApp&) = delete;
     OniForgeApp(OniForgeApp&&) = delete;
     OniForgeApp& operator=(OniForgeApp&&) = delete;
 
+    /**
+     * @brief Starts the application main loop.
+     *
+     * Initializes the renderer, loads data, and enters the game loop.
+     * Blocks until the application is closed.
+     * @return Exit code (0 for success, non-zero for error).
+     */
     int run();
 
 private:
@@ -95,13 +105,31 @@ private:
     std::vector<std::string> m_tryInOniLog;
 
     // --- Lifecycle ---
+    
+    /**
+     * @brief Initializes the renderer and loads initial data.
+     * @return True if initialization succeeded, false otherwise.
+     */
     bool init();
+
+    /**
+     * @brief The core application loop (Input -> Update -> Render).
+     */
     void mainLoop();
 
     // --- Render ---
+    
+    /**
+     * @brief High-level render function called every frame.
+     */
     void render();
+
     void renderMenuBar();
     void renderLeftPanel();
     void renderRightPanel();
+    
+    /**
+     * @brief Renders the "Try in Oni" modal dialog if active.
+     */
     void renderTryInOniModal();
 };

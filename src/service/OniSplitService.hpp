@@ -20,15 +20,24 @@ class OniSplitService {
 public:
     using OutputCallback = std::function<void(const std::string& line)>;
 
+    /**
+     * @brief Constructs the service with paths to the tools and game.
+     * @param oniSplitPath Absolute path to the OniSplit executable.
+     * @param oniGamePath  Absolute path to the Oni game directory (containing GameDataFolder).
+     */
     explicit OniSplitService(const std::string& oniSplitPath,
                              const std::string& oniGamePath);
 
     /**
      * @brief Runs the full "Try in ONI" pipeline.
+     *
+     * This orchestrates the conversion, packaging, copying, and launching process.
+     *
      * @param projectXmlPath  Folder containing the mod XML files.
      * @param tempOniPath     Temp folder where .oni files will be written.
-     * @param useSep          If true, uses -import:sep (Mac/PC Demo). Else -import:nosep (PC Retail).
-     * @param onOutput        Called for each line of OniSplit output.
+     * @param useSep          If true, uses -import:sep (Mac/PC Demo format).
+     *                        If false, uses -import:nosep (PC Retail format).
+     * @param onOutput        Callback function for streaming process output.
      * @return true if all steps succeeded.
      */
     bool tryInOni(const std::filesystem::path& projectXmlPath,
@@ -44,20 +53,41 @@ private:
     static constexpr std::string_view GAME_DATA_FOLDER = "GameDataFolder";
     static constexpr std::string_view ONI_EXE          = "Oni.exe";
 
+    /**
+     * @brief Executes a shell command and streams its output.
+     */
     bool runProcess(const std::string&    command,
                     const OutputCallback& onOutput) const;
 
+    /**
+     * @brief Converts XML files to .oni binary files.
+     */
     bool convertXmlToOni(const std::filesystem::path& xmlPath,
                          const std::filesystem::path& oniPath,
                          const OutputCallback&        onOutput) const;
 
+    /**
+     * @brief Packages .oni files into a .dat level file.
+     *
+     * @param oniPath Path containing the source .oni files.
+     * @param datPath Path where the output .dat file will be created.
+     * @param useSep  Controls the import format (-import:sep vs -import:nosep).
+     * @param onOutput Callback for logging.
+     * @return true on success.
+     */
     bool packageDat(const std::filesystem::path& oniPath,
                     const std::filesystem::path& datPath,
                     bool                         useSep,
                     const OutputCallback&        onOutput) const;
 
+    /**
+     * @brief Copies the generated .dat file to the game directory.
+     */
     bool copyDat(const std::filesystem::path& datPath,
                  const OutputCallback&        onOutput) const;
 
+    /**
+     * @brief Launches the Oni game executable.
+     */
     bool launchOni(const OutputCallback& onOutput) const;
 };

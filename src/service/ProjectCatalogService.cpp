@@ -3,7 +3,7 @@
 #include "repository/OniRepositoryRegistry.hpp"
 
 ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
-                                             IOniCatalogService&          vanilla,
+                                             const IOniCatalogService&    vanilla,
                                              const ILogger&               logger)
     : m_repos(repos)
       , m_vanilla(vanilla)
@@ -106,7 +106,7 @@ void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath
         }
     }
 
-    for (const auto& [path, data] : m_tramFiles) {
+    for (const auto& [path, data]: m_tramFiles) {
         if (OniFile out{folderPath / path.filename(), data}; !m_repos.tram.save(out))
             m_logger.error("[ProjectCatalogService] error saving TRAM: " + path.filename().string());
     }
