@@ -1,5 +1,4 @@
 #include "gui/OniForgeApp.hpp"
-
 #include <imgui.h>
 
 // ---------------------------------------------------------------------------
@@ -17,12 +16,16 @@ OniForgeApp::OniForgeApp()
     , m_repos{ m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo }
     , m_vanilla(m_repos, m_logger)
     , m_project(m_repos, m_vanilla, m_logger)
-    , m_oniSplit(std::string(ONISPLIT_PATH), std::string(ONI_GAME_PATH))
+    , m_oniSplit(m_config.oniSplitPath, m_config.oniGamePath)
     , m_onccView(m_vanilla, m_project)
     , m_oncvView(m_vanilla, m_project)
     , m_tracView(m_vanilla, m_project)
     , m_tramView(m_vanilla, m_project)
-    , m_addFileModal(m_vanilla, m_project, m_logger) {}
+    , m_addFileModal(m_vanilla, m_project, m_logger)
+    , m_settingsModal(m_config, m_renderer) {
+    
+    loadConfig();
+}
 
 // ---------------------------------------------------------------------------
 // Public
@@ -40,11 +43,14 @@ int OniForgeApp::run() {
 
 bool OniForgeApp::init() {
     m_logger.separator();
-    m_vanilla.loadFromFolder(std::string(VANILLA_PATH));
-    m_project.loadFromFolder(std::string(PROJECT_PATH));
+    m_logger.info("[OniForge] Initializing...");
+    
+    // Services may need re-init after path changes in settings, but on first run we load:
+    m_vanilla.loadFromFolder(m_config.vanillaPath);
+    m_project.loadFromFolder(m_config.projectPath);
     m_logger.separator();
 
-    if (!m_renderer.init("OniForge", 1280, 720, m_currentTheme, FONT_SIZES[m_currentFontIndex]))
+    if (!m_renderer.init("OniForge", 1280, 720, m_config.theme, static_cast<float>(m_config.fontSize)))
         return false;
 
     m_running = true;
@@ -53,13 +59,62 @@ bool OniForgeApp::init() {
 
 void OniForgeApp::mainLoop() {
     while (m_running) {
-        if (m_fontReloadPending) {
-            m_renderer.loadFont(m_pendingFontSize);
-            m_fontReloadPending = false;
+        // Deferred font reload happens OUTSIDE of beginFrame/endFrame (no ImGui frame active)
+        if (m_renderer.isFontReloadPending()) {
+            m_renderer.loadFont(m_renderer.getPendingFontSize());
+            m_renderer.setFontReloadPending(false);
         }
         m_renderer.beginFrame(m_running);
         render();
         m_renderer.endFrame();
+    }
+}
+
+void OniForgeApp::loadConfig() {
+    if (!std::filesystem::exists(std::string(CONFIG_FILE))) {
+        m_logger.info("[Config] Config file not found, using defaults.");
+        return;
+    }
+
+    XmlDocument doc;
+    if (!m_reader.read(std::string(CONFIG_FILE), doc)) {
+        m_logger.error("[Config] Failed to read config file.");
+        return;
+    }
+
+    const auto root = doc.getRawDocument().child("OniForgeConfig");
+    if (!root) return;
+
+    m_config.vanillaPath  = root.child("VanillaPath").text().as_string();
+    m_config.projectPath  = root.child("ProjectPath").text().as_string();
+    m_config.oniSplitPath = root.child("OniSplitPath").text().as_string();
+    m_config.oniGamePath  = root.child("OniGamePath").text().as_string();
+    m_config.tempOniPath  = root.child("TempOniPath").text().as_string();
+    m_config.theme        = static_cast<Theme>(root.child("Theme").text().as_int());
+    m_config.fontSize     = root.child("FontSize").text().as_int();
+
+    m_logger.info("[Config] Configuration loaded.");
+}
+
+void OniForgeApp::saveConfig() {
+    XmlDocument doc;
+    auto root = doc.getRawDocument().append_child("OniForgeConfig");
+    
+    root.append_child("VanillaPath").text().set(m_config.vanillaPath.c_str());
+    root.append_child("ProjectPath").text().set(m_config.projectPath.c_str());
+    root.append_child("OniSplitPath").text().set(m_config.oniSplitPath.c_str());
+    root.append_child("OniGamePath").text().set(m_config.oniGamePath.c_str());
+    root.append_child("TempOniPath").text().set(m_config.tempOniPath.c_str());
+    root.append_child("Theme").text().set(static_cast<int>(m_config.theme));
+    root.append_child("FontSize").text().set(m_config.fontSize);
+
+    // IMPORTANT: mark the document as loaded so XmlWriter doesn't reject it
+    doc.markAsLoaded();
+
+    if (m_writer.write(doc, std::string(CONFIG_FILE))) {
+        m_logger.info("[Config] Configuration saved.");
+    } else {
+        m_logger.error("[Config] Failed to save configuration.");
     }
 }
 
@@ -97,6 +152,12 @@ void OniForgeApp::render() {
     ImGui::End();
 
     m_addFileModal.render();
+    m_settingsModal.render([this]() {
+        // Save to file on user "Save" click
+        saveConfig();
+        // Update OniSplit with potentially new paths
+        m_oniSplit = OniSplitService(m_config.oniSplitPath, m_config.oniGamePath);
+    });
     renderTryInOniModal();
 }
 
@@ -105,7 +166,10 @@ void OniForgeApp::renderMenuBar() {
 
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Save All"))
-            m_project.saveToFolder(std::string(PROJECT_PATH));
+            m_project.saveToFolder(m_config.projectPath);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Settings..."))
+            m_settingsModal.open();
         ImGui::Separator();
         if (ImGui::MenuItem("Exit"))
             m_running = false;
@@ -119,38 +183,16 @@ void OniForgeApp::renderMenuBar() {
             m_tryInOniSuccess   = false;
             m_showTryInOniModal = true;
 
-            m_project.saveToFolder(std::string(PROJECT_PATH));
+            m_project.saveToFolder(m_config.projectPath);
             m_tryInOniLog.emplace_back("[OniForge] Project saved.");
 
             m_tryInOniSuccess = m_oniSplit.tryInOni(
-                std::string(PROJECT_PATH),
-                std::string(TEMP_ONI_PATH),
+                m_config.projectPath,
+                m_config.tempOniPath,
                 false, 
                 [this](const std::string& line) { m_tryInOniLog.push_back(line); }
             );
             m_tryInOniRunning = false;
-        }
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Settings")) {
-        if (ImGui::BeginMenu("Theme")) {
-            if (ImGui::MenuItem("Dark",    nullptr, m_currentTheme == Theme::Dark))    { m_renderer.applyTheme(Theme::Dark);    m_currentTheme = Theme::Dark; }
-            if (ImGui::MenuItem("Light",   nullptr, m_currentTheme == Theme::Light))   { m_renderer.applyTheme(Theme::Light);   m_currentTheme = Theme::Light; }
-            if (ImGui::MenuItem("Classic", nullptr, m_currentTheme == Theme::Classic)) { m_renderer.applyTheme(Theme::Classic); m_currentTheme = Theme::Classic; }
-            if (ImGui::MenuItem("Neutral", nullptr, m_currentTheme == Theme::Neutral)) { m_renderer.applyTheme(Theme::Neutral); m_currentTheme = Theme::Neutral; }
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
-        if (ImGui::BeginMenu("Font Size")) {
-            for (int i = 0; i < FONT_COUNT; ++i) {
-                if (ImGui::MenuItem(FONT_LABELS[i], nullptr, m_currentFontIndex == i)) {
-                    m_currentFontIndex  = i;
-                    m_pendingFontSize   = FONT_SIZES[i];
-                    m_fontReloadPending = true;
-                }
-            }
-            ImGui::EndMenu();
         }
         ImGui::EndMenu();
     }

@@ -3,21 +3,22 @@
 #include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
-#include "repository/ONCCRepository.hpp"
-#include "repository/ONCVRepository.hpp"
-#include "repository/TRACRepository.hpp"
-#include "repository/TRAMRepository.hpp"
-#include "repository/OniRepositoryRegistry.hpp"
-#include "service/VanillaCatalogService.hpp"
-#include "service/ProjectCatalogService.hpp"
-#include "service/OniSplitService.hpp"
 #include "gui/OniGuiRenderer.hpp"
-#include "gui/OniForgeTheme.hpp"
+#include "gui/views/AddFileModal.hpp"
 #include "gui/views/ONCCView.hpp"
 #include "gui/views/ONCVView.hpp"
+#include "gui/views/SettingsModal.hpp"
 #include "gui/views/TRACView.hpp"
 #include "gui/views/TRAMView.hpp"
-#include "gui/views/AddFileModal.hpp"
+#include "model/Config.hpp"
+#include "repository/ONCCRepository.hpp"
+#include "repository/ONCVRepository.hpp"
+#include "repository/OniRepositoryRegistry.hpp"
+#include "repository/TRACRepository.hpp"
+#include "repository/TRAMRepository.hpp"
+#include "service/OniSplitService.hpp"
+#include "service/ProjectCatalogService.hpp"
+#include "service/VanillaCatalogService.hpp"
 
 #include <string>
 #include <vector>
@@ -35,7 +36,6 @@ public:
     OniForgeApp();
     ~OniForgeApp() = default;
 
-    // Non-copyable, non-movable (owns unique resources like SDL window)
     OniForgeApp(const OniForgeApp&) = delete;
     OniForgeApp& operator=(const OniForgeApp&) = delete;
     OniForgeApp(OniForgeApp&&) = delete;
@@ -51,21 +51,15 @@ public:
     int run();
 
 private:
-    static constexpr std::string_view VANILLA_PATH  = R"(D:\Dev\java\oniforge\vanilla\xml)";
-    static constexpr std::string_view PROJECT_PATH  = R"(D:\Dev\mods\oni\TCTFagent)";
-    static constexpr std::string_view ONISPLIT_PATH = R"(D:\Dev\mods\oni\.tools\OniSplit.exe)";
-    static constexpr std::string_view ONI_GAME_PATH = R"(D:\Program Files (x86)\Oni\AE)";
-    static constexpr std::string_view TEMP_ONI_PATH = R"(D:\Dev\mods\oni\TCTFagent\_build)";
+    static constexpr std::string_view CONFIG_FILE = "oniforge.config.xml";
 
-    static constexpr float       FONT_SIZES[]  = { 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f };
-    static constexpr const char* FONT_LABELS[] = { "13",  "14",  "15",  "16",  "17",  "18"  };
-    static constexpr int         FONT_COUNT    = 6;
-    static constexpr int         FONT_DEFAULT  = 2;
+    // --- Core ---
+    OniForge::Config m_config;
+    Logger           m_logger;
+    XmlReader        m_reader;
+    XmlWriter        m_writer;
 
-    // --- Infrastructure ---
-    Logger                m_logger;
-    XmlReader             m_reader;
-    XmlWriter             m_writer;
+    // --- Persistence ---
     ONCCRepository        m_onccRepo;
     ONCVRepository        m_oncvRepo;
     TRACRepository        m_tracRepo;
@@ -81,11 +75,12 @@ private:
     OniGuiRenderer m_renderer;
 
     // --- Views ---
-    ONCCView     m_onccView;
-    ONCVView     m_oncvView;
-    TRACView     m_tracView;
-    TRAMView     m_tramView;
-    AddFileModal m_addFileModal;
+    ONCCView                 m_onccView;
+    ONCVView                 m_oncvView;
+    TRACView                 m_tracView;
+    TRAMView                 m_tramView;
+    AddFileModal             m_addFileModal;
+    OniForge::SettingsModal  m_settingsModal;
 
     // --- App state ---
     bool  m_running           = false;
@@ -93,10 +88,6 @@ private:
     int   m_selectedOncvIndex = -1;
     int   m_selectedTracIndex = -1;
     int   m_selectedTramIndex = -1;
-    Theme m_currentTheme      = Theme::Neutral;
-    int   m_currentFontIndex  = FONT_DEFAULT;
-    bool  m_fontReloadPending = false;
-    float m_pendingFontSize   = 15.0f;
 
     // --- Try in ONI modal state ---
     bool                     m_showTryInOniModal = false;
@@ -116,6 +107,8 @@ private:
      * @brief The core application loop (Input -> Update -> Render).
      */
     void mainLoop();
+    void loadConfig();
+    void saveConfig();
 
     // --- Render ---
     

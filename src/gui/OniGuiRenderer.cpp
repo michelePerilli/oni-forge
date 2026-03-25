@@ -1,13 +1,13 @@
 #include "gui/OniGuiRenderer.hpp"
 
+#include <cstdio>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl2.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
-#include <cstdio>
-#include "misc/freetype/imgui_freetype.h"
 #include "fonts/InterMediumFont.hpp"
+#include "misc/freetype/imgui_freetype.h"
 // ---------------------------------------------------------------------------
 // Destructor
 // ---------------------------------------------------------------------------
@@ -129,7 +129,7 @@ void OniGuiRenderer::endFrame() const {
 // ---------------------------------------------------------------------------
 
 void OniGuiRenderer::loadFont(const float size) {
-    const ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
     io.Fonts->Flags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 

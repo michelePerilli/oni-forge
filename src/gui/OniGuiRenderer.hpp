@@ -53,7 +53,7 @@ public:
      * @brief Reloads the font atlas with the given size.
      * Must be called outside of a frame (before beginFrame).
      */
-    static void loadFont(float size);
+    void loadFont(float size);
 
     /**
      * @brief Applies a theme to the current ImGui style.
@@ -62,8 +62,21 @@ public:
 
     [[nodiscard]] bool isInitialized() const { return m_initialized; }
 
+    // New methods and members for deferred font loading
+    void setFontReloadPending(const bool pending, const float newSize = 0.0f) {
+        m_fontReloadPending = pending;
+        if (pending) {
+            m_pendingFontSize = newSize;
+        }
+    }
+
+    [[nodiscard]] bool isFontReloadPending() const { return m_fontReloadPending; }
+    [[nodiscard]] float getPendingFontSize() const { return m_pendingFontSize; }
+
 private:
     SDL_Window*   m_window      = nullptr;
     SDL_GLContext m_glContext   = nullptr;
     bool          m_initialized = false;
+    bool          m_fontReloadPending = false;
+    float         m_pendingFontSize = 0.0f;
 };
