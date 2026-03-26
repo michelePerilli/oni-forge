@@ -1,3 +1,8 @@
+/**
+ * @file ONCCView.cpp
+ * @brief Implementation of the ONCC (Character Class) editor view.
+ */
+
 #include "gui/views/ONCCView.hpp"
 #include "component/validation/OniValidator.hpp"
 #include <imgui.h>
@@ -5,60 +10,98 @@
 #include <filesystem>
 #include <cstring>
 
+/**
+ * @brief Constructs an ONCC editor view with references to catalog services.
+ * @param vanilla Reference to the vanilla catalog service for read-only data.
+ * @param project Reference to the project catalog service for modifiable data.
+ */
 ONCCView::ONCCView(const VanillaCatalogService& vanilla,
                    ProjectCatalogService&       project)
     : m_vanilla(vanilla)
       , m_project(project) {
 }
 
+/**
+ * @brief Renders the editor's top bar (file renaming and saving).
+ * @param file The ONCC file being edited.
+ * @param selectedIndex The index of the file in the open files list.
+ */
 void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 120.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-    ImGui::SeparatorText("ONCC");
-    // Name + Save
+    ImGui::SeparatorText("Character Class (ONCC)");
+
+    // Filename input and Save button
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Name:");
+    ImGui::TextUnformatted("File Name:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
         const std::string stem = file.path.stem().string();
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##name", buf, sizeof(buf)))
+        if (ImGui::InputText("##filename", buf, sizeof(buf))) {
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+        }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Save##oncc", {60, 0}))
+    if (ImGui::Button("Save##oncc", {60, 0})) {
         saveWithRename(file, selectedIndex);
+    }
     ImGui::Spacing();
 }
 
+/**
+ * @brief Main entry point for rendering the ONCC editor's tabbed interface.
+ * @details Handles validation triggering and tab navigation.
+ * @param file The ONCC file being edited.
+ * @param selectedIndex The index of the file in the open files list.
+ */
 void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     if (!m_originalPaths.contains(selectedIndex))
         m_originalPaths[selectedIndex] = file.path;
 
-    ONCC::ONCC& oncc           = file.data.oncc;
-    static bool needValidation = true;
-    if (needValidation) {
-        OniForge::Validation::checkOnccImpacts(file, m_project, m_vanilla);
-        needValidation = false;
+    // Trigger validation pass if needed
+    if (m_needValidation) {
+        m_validationResult = OniForge::Validation::checkOnccImpacts(file, m_project, m_vanilla);
+        m_needValidation   = false;
     }
-    constexpr float labelWidth = 120.0f;
-    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
-    // Variant
+    if (ImGui::BeginTabBar("ONCCTabs")) {
+        if (ImGui::BeginTabItem("General")) {
+            renderGeneralTab(file);
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Impacts")) {
+            renderImpactsTab(file);
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+}
+
+/**
+ * @brief Renders the "General" tab for core ONCC properties.
+ * @details Includes variant selection, animation collection, stats, and flags.
+ * @param file The ONCC file being edited.
+ */
+void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
+    ONCC::ONCC&     oncc       = file.data.oncc;
+    constexpr float labelWidth = 120.0f;
+    const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 20.0f;
+
+    ImGui::Spacing();
+
+    // Variant Selection
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Variant:");
+    ImGui::TextUnformatted("Variant (ONCV):");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         std::string& current = oncc.variant;
         static bool  wasOpen = false;
         if (ImGui::BeginCombo("##variant", current.c_str())) {
             static char filter[128] = {};
-            if (!wasOpen) {
-                filter[0] = '\0';
-                wasOpen   = true;
-            }
+            if (!wasOpen) { filter[0] = '\0'; wasOpen = true; }
 
             ImGui::SetNextItemWidth(-1);
             ImGui::InputText("##variantfilter", filter, sizeof(filter));
@@ -67,30 +110,24 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
             const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
             ImGui::BeginChild("##variantlist", {0, listHeight}, false);
 
-            // Project files
-            ImGui::SeparatorText("Project");
+            ImGui::SeparatorText("Project Catalog");
             for (const auto& [path, data]: m_project.getOncvFiles()) {
                 const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
-                    continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false;
-                if (ImGui::Selectable(name.c_str(), selected)) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
                     current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
             }
 
-            // Vanilla files
-            ImGui::SeparatorText("Vanilla");
+            ImGui::SeparatorText("Vanilla Catalog");
             for (const auto& [path, data]: m_vanilla.getOncvFiles()) {
                 const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
-                    continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false;
-                if (ImGui::Selectable(name.c_str(), selected)) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
                     current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
@@ -99,24 +136,19 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
 
             ImGui::EndChild();
             ImGui::EndCombo();
-        } else {
-            wasOpen = false;
-        }
+        } else { wasOpen = false; }
     }
 
-    // Animations
+    // Animation Collection Selection
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Animations:");
+    ImGui::TextUnformatted("Anims (TRAC):");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         std::string& current = oncc.animations;
         static bool  wasOpen = false;
         if (ImGui::BeginCombo("##animations", current.c_str())) {
             static char filter[128] = {};
-            if (!wasOpen) {
-                filter[0] = '\0';
-                wasOpen   = true;
-            }
+            if (!wasOpen) { filter[0] = '\0'; wasOpen = true; }
 
             ImGui::SetNextItemWidth(-1);
             ImGui::InputText("##animationsfilter", filter, sizeof(filter));
@@ -125,48 +157,42 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
             const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
             ImGui::BeginChild("##animationslist", {0, listHeight}, false);
 
-            // Project files
-            ImGui::SeparatorText("Project");
+            ImGui::SeparatorText("Project Catalog");
             for (const auto& [path, data]: m_project.getTracFiles()) {
                 const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
-                    continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false;
-                if (ImGui::Selectable(name.c_str(), selected)) {
-                    current   = name;
-                    filter[0] = '\0';
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current          = name;
+                    filter[0]        = '\0';
+                    m_needValidation = true;
                     ImGui::CloseCurrentPopup();
                 }
             }
 
-            // Vanilla files
-            ImGui::SeparatorText("Vanilla");
+            ImGui::SeparatorText("Vanilla Catalog");
             for (const auto& [path, data]: m_vanilla.getTracFiles()) {
                 const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
-                    continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false;
-                if (ImGui::Selectable(name.c_str(), selected)) {
-                    current   = name;
-                    filter[0] = '\0';
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current          = name;
+                    filter[0]        = '\0';
+                    m_needValidation = true;
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             ImGui::EndChild();
             ImGui::EndCombo();
-        } else {
-            wasOpen = false;
-        }
+        } else { wasOpen = false; }
     }
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Health
+    // Stats
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Health:");
     ImGui::SameLine(labelWidth);
@@ -177,7 +203,6 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
         if (ImGui::InputText("##health", buf, sizeof(buf))) oncc.health = buf;
     }
 
-    // Weapon Hand
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Weapon Hand:");
     ImGui::SameLine(labelWidth);
@@ -202,16 +227,118 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     if (ImGui::Checkbox("Can't Touch This", &cantTouch)) oncc.cantTouchThis = cantTouch ? "1" : "0";
 }
 
+/**
+ * @brief Renders the "Impacts" tab for managing the character's particle registration.
+ * @details Allows viewing, adding, and removing impact registrations. 
+ *          Integrates with the validation system to show missing impacts.
+ * @param file The ONCC file being edited.
+ */
+void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
+    auto& impacts = file.data.onia.impacts;
+
+    if (m_selectedImpacts.size() != impacts.size()) {
+        m_selectedImpacts.resize(impacts.size(), false);
+    }
+
+    ImGui::Spacing();
+    if (ImGui::Button("+ Add New Impact")) {
+        impacts.push_back({"", "", ""});
+        m_selectedImpacts.push_back(false);
+        m_needValidation = true;
+    }
+    ImGui::SameLine();
+
+    const bool anySelected = std::ranges::any_of(m_selectedImpacts, [](bool b) { return b; });
+    if (!anySelected) ImGui::BeginDisabled();
+    if (ImGui::Button("Delete Selected")) {
+        for (int i = static_cast<int>(impacts.size()) - 1; i >= 0; i--) {
+            if (m_selectedImpacts[i]) {
+                impacts.erase(impacts.begin() + i);
+                m_selectedImpacts.erase(m_selectedImpacts.begin() + i);
+            }
+        }
+        m_needValidation = true;
+    }
+    if (!anySelected) ImGui::EndDisabled();
+
+    // Impacts Table
+    if (ImGui::BeginTable("ImpactsTable", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders | ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("##sel", ImGuiTableColumnFlags_WidthFixed, 25.0f);
+        ImGui::TableSetupColumn("Impact Name");
+        ImGui::TableSetupColumn("Type");
+        ImGui::TableSetupColumn("Modifier");
+        ImGui::TableHeadersRow();
+
+        for (int i = 0; i < static_cast<int>(impacts.size()); i++) {
+            ImGui::TableNextRow();
+            ImGui::PushID(i);
+
+            ImGui::TableNextColumn();
+            bool isSelected = m_selectedImpacts[i];
+            if (ImGui::Checkbox("##sel", &isSelected)) {
+                m_selectedImpacts[i] = isSelected;
+            };
+
+            auto renderCell = [&](const char* id, std::string& val, bool triggerValid = false) {
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                char buf[128];
+                snprintf(buf, sizeof(buf), "%s", val.c_str());
+                if (ImGui::InputText(id, buf, sizeof(buf))) {
+                    val = buf;
+                    if (triggerValid) m_needValidation = true;
+                }
+            };
+
+            renderCell("##n", impacts[i].name, true);
+            renderCell("##t", impacts[i].type);
+            renderCell("##m", impacts[i].modifier);
+
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+
+    // Validation Warnings Section
+    if (!m_validationResult.unregisteredImpacts.empty()) {
+        ImGui::Spacing();
+        ImGui::SeparatorText("Validation: Missing Impact Registrations");
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+        ImGui::TextWrapped("The following impacts are used by animations but are not registered in the ONCP list:");
+        
+        for (const auto& impact: m_validationResult.unregisteredImpacts) {
+            ImGui::BulletText("%s", impact.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton(("Add Registration##" + impact).c_str())) {
+                impacts.push_back({impact, "Swt_Super_Punch", "Heavy"});
+                m_selectedImpacts.push_back(false);
+                m_needValidation = true;
+            }
+        }
+        ImGui::PopStyleColor();
+    }
+}
+
+/**
+ * @brief Handles file saving while tracking and removing old files if a rename occurred.
+ * @param file The ONCC file to save.
+ * @param selectedIndex The index of the file in the open files list.
+ */
 void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
         if (const auto& original = m_originalPaths[selectedIndex];
-            original != file.path && std::filesystem::exists(original))
+            original != file.path && std::filesystem::exists(original)) {
             std::filesystem::remove(original);
+        }
         m_originalPaths[selectedIndex] = file.path;
     }
     m_project.saveToFolder(file.path.parent_path());
 }
 
+/**
+ * @brief Retrieves a sorted list of all available vanilla ONCV stems.
+ * @return A vector of strings containing the stems of vanilla ONCV files.
+ */
 std::vector<std::string> ONCCView::getVanillaOncvNames() const {
     std::vector<std::string> names;
     for (const auto& [path, data]: m_vanilla.getOncvFiles())
@@ -220,6 +347,10 @@ std::vector<std::string> ONCCView::getVanillaOncvNames() const {
     return names;
 }
 
+/**
+ * @brief Retrieves a sorted list of all available vanilla TRAC stems.
+ * @return A vector of strings containing the stems of vanilla TRAC files.
+ */
 std::vector<std::string> ONCCView::getVanillaTracNames() const {
     std::vector<std::string> names;
     for (const auto& [path, data]: m_vanilla.getTracFiles())

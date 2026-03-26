@@ -7,23 +7,22 @@
 
 OniForgeApp::OniForgeApp()
     : m_logger("oniforge.log")
-    , m_reader(m_logger)
-    , m_writer(m_logger)
-    , m_onccRepo(m_reader, m_writer, m_logger)
-    , m_oncvRepo(m_reader, m_writer, m_logger)
-    , m_tracRepo(m_reader, m_writer, m_logger)
-    , m_tramRepo(m_reader, m_writer, m_logger)
-    , m_repos{ m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo }
-    , m_vanilla(m_repos, m_logger)
-    , m_project(m_repos, m_vanilla, m_logger)
-    , m_oniSplit(m_config.oniSplitPath, m_config.oniGamePath)
-    , m_onccView(m_vanilla, m_project)
-    , m_oncvView(m_vanilla, m_project)
-    , m_tracView(m_vanilla, m_project)
-    , m_tramView(m_vanilla, m_project)
-    , m_addFileModal(m_vanilla, m_project, m_logger)
-    , m_settingsModal(m_config, m_renderer) {
-    
+      , m_reader(m_logger)
+      , m_writer(m_logger)
+      , m_onccRepo(m_reader, m_writer, m_logger)
+      , m_oncvRepo(m_reader, m_writer, m_logger)
+      , m_tracRepo(m_reader, m_writer, m_logger)
+      , m_tramRepo(m_reader, m_writer, m_logger)
+      , m_repos{m_onccRepo, m_oncvRepo, m_tracRepo, m_tramRepo}
+      , m_vanilla(m_repos, m_logger)
+      , m_project(m_repos, m_vanilla, m_logger)
+      , m_oniSplit(m_config.oniSplitPath, m_config.oniGamePath)
+      , m_onccView(m_vanilla, m_project)
+      , m_oncvView(m_vanilla, m_project)
+      , m_tracView(m_vanilla, m_project)
+      , m_tramView(m_vanilla, m_project)
+      , m_addFileModal(m_vanilla, m_project, m_logger)
+      , m_settingsModal(m_config, m_renderer) {
     loadConfig();
 }
 
@@ -31,6 +30,10 @@ OniForgeApp::OniForgeApp()
 // Public
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Main execution entry point for the application.
+ * @return Exit code (0 for success).
+ */
 int OniForgeApp::run() {
     if (!init()) return 1;
     mainLoop();
@@ -41,11 +44,15 @@ int OniForgeApp::run() {
 // Lifecycle
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Initializes application services, logs, and renderer.
+ * @return True if initialization was successful.
+ */
 bool OniForgeApp::init() {
     m_logger.separator();
     m_logger.info("[OniForge] Initializing...");
-    
-    // Services may need re-init after path changes in settings, but on first run we load:
+
+    // Initial data load from configured paths
     m_vanilla.loadFromFolder(m_config.vanillaPath);
     m_project.loadFromFolder(m_config.projectPath);
     m_logger.separator();
@@ -57,19 +64,27 @@ bool OniForgeApp::init() {
     return true;
 }
 
+/**
+ * @brief Standard game loop: handles events, updates, and rendering.
+ */
 void OniForgeApp::mainLoop() {
     while (m_running) {
-        // Deferred font reload happens OUTSIDE of beginFrame/endFrame (no ImGui frame active)
+        // Deferred font reload must happen OUTSIDE of beginFrame/endFrame 
+        // because ImGui forbids modifying the font atlas while a frame is active.
         if (m_renderer.isFontReloadPending()) {
             m_renderer.loadFont(m_renderer.getPendingFontSize());
             m_renderer.setFontReloadPending(false);
         }
+        
         m_renderer.beginFrame(m_running);
         render();
         m_renderer.endFrame();
     }
 }
 
+/**
+ * @brief Loads application settings from oniforge.config.xml.
+ */
 void OniForgeApp::loadConfig() {
     if (!std::filesystem::exists(std::string(CONFIG_FILE))) {
         m_logger.info("[Config] Config file not found, using defaults.");
@@ -96,10 +111,13 @@ void OniForgeApp::loadConfig() {
     m_logger.info("[Config] Configuration loaded.");
 }
 
+/**
+ * @brief Persists current application settings to oniforge.config.xml.
+ */
 void OniForgeApp::saveConfig() {
     XmlDocument doc;
-    auto root = doc.getRawDocument().append_child("OniForgeConfig");
-    
+    auto        root = doc.getRawDocument().append_child("OniForgeConfig");
+
     root.append_child("VanillaPath").text().set(m_config.vanillaPath.c_str());
     root.append_child("ProjectPath").text().set(m_config.projectPath.c_str());
     root.append_child("OniSplitPath").text().set(m_config.oniSplitPath.c_str());
@@ -108,7 +126,7 @@ void OniForgeApp::saveConfig() {
     root.append_child("Theme").text().set(static_cast<int>(m_config.theme));
     root.append_child("FontSize").text().set(m_config.fontSize);
 
-    // IMPORTANT: mark the document as loaded so XmlWriter doesn't reject it
+    // markAsLoaded() is required so the XmlWriter accepts the manually built tree
     doc.markAsLoaded();
 
     if (m_writer.write(doc, std::string(CONFIG_FILE))) {
@@ -122,16 +140,19 @@ void OniForgeApp::saveConfig() {
 // Render
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Main UI composition method.
+ */
 void OniForgeApp::render() {
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("##root", nullptr,
-        ImGuiWindowFlags_NoTitleBar  |
-        ImGuiWindowFlags_NoResize    |
-        ImGuiWindowFlags_NoMove      |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_MenuBar
+                 ImGuiWindowFlags_NoTitleBar |
+                 ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoScrollbar |
+                 ImGuiWindowFlags_MenuBar
     );
 
     renderMenuBar();
@@ -153,14 +174,16 @@ void OniForgeApp::render() {
 
     m_addFileModal.render();
     m_settingsModal.render([this]() {
-        // Save to file on user "Save" click
         saveConfig();
-        // Update OniSplit with potentially new paths
+        // Re-init OniSplit if paths changed
         m_oniSplit = OniSplitService(m_config.oniSplitPath, m_config.oniGamePath);
     });
     renderTryInOniModal();
 }
 
+/**
+ * @brief Renders the application's top menu bar.
+ */
 void OniForgeApp::renderMenuBar() {
     if (!ImGui::BeginMenuBar()) return;
 
@@ -189,7 +212,7 @@ void OniForgeApp::renderMenuBar() {
             m_tryInOniSuccess = m_oniSplit.tryInOni(
                 m_config.projectPath,
                 m_config.tempOniPath,
-                false, 
+                false,
                 [this](const std::string& line) { m_tryInOniLog.push_back(line); }
             );
             m_tryInOniRunning = false;
@@ -200,6 +223,9 @@ void OniForgeApp::renderMenuBar() {
     ImGui::EndMenuBar();
 }
 
+/**
+ * @brief Renders the modal window showing progress of the "Try in ONI" task.
+ */
 void OniForgeApp::renderTryInOniModal() {
     if (!m_showTryInOniModal) return;
 
@@ -213,7 +239,7 @@ void OniForgeApp::renderTryInOniModal() {
     );
 
     if (!ImGui::BeginPopupModal("Try in ONI", &m_showTryInOniModal,
-        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+                                ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
         return;
 
     if (m_tryInOniRunning)
@@ -227,7 +253,7 @@ void OniForgeApp::renderTryInOniModal() {
     ImGui::Spacing();
 
     ImGui::BeginChild("##log", {0, 350}, true, ImGuiWindowFlags_HorizontalScrollbar);
-    for (const auto& line : m_tryInOniLog)
+    for (const auto& line: m_tryInOniLog)
         ImGui::TextUnformatted(line.c_str());
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
         ImGui::SetScrollHereY(1.0f);
@@ -244,8 +270,11 @@ void OniForgeApp::renderTryInOniModal() {
     ImGui::EndPopup();
 }
 
+/**
+ * @brief Renders the left sidebar containing the project file tree.
+ */
 void OniForgeApp::renderLeftPanel() {
-    ImGui::TextDisabled("Project");
+    ImGui::TextDisabled("Project Contents");
     ImGui::Separator();
 
     if (const auto& onccFiles = m_project.getOnccFiles(); !onccFiles.empty()) {
@@ -316,6 +345,9 @@ void OniForgeApp::renderLeftPanel() {
         m_addFileModal.open();
 }
 
+/**
+ * @brief Renders the right panel content based on the currently selected file.
+ */
 void OniForgeApp::renderRightPanel() {
     if (m_selectedOnccIndex >= 0 &&
         m_selectedOnccIndex < static_cast<int>(m_project.getOnccFiles().size())) {
@@ -323,10 +355,7 @@ void OniForgeApp::renderRightPanel() {
         auto& file  = files[m_selectedOnccIndex];
         m_onccView.renderHeaderRow(file, m_selectedOnccIndex);
         if (ImGui::BeginTabBar("##tabs")) {
-            if (ImGui::BeginTabItem("General")) {
-                m_onccView.render(file, m_selectedOnccIndex);
-                ImGui::EndTabItem();
-            }
+            m_onccView.render(file, m_selectedOnccIndex);
             ImGui::EndTabBar();
         }
         return;

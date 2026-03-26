@@ -4,6 +4,7 @@
 #include "model/ONCC.hpp"
 #include "service/VanillaCatalogService.hpp"
 #include "service/ProjectCatalogService.hpp"
+#include "component/validation/OniValidator.hpp"
 
 #include <filesystem>
 #include <string>
@@ -55,6 +56,15 @@ private:
     /// Maps file index to its original path for tracking renames.
     std::unordered_map<int, std::filesystem::path> m_originalPaths;
 
+    /// Stores the results of the last validation run for impact effects.
+    OniForge::Validation::OnccImpactValidationResult m_validationResult;
+    
+    /// Flag to trigger a fresh validation pass on the next render.
+    bool m_needValidation = true;
+
+    /// Tracking selected rows in the impacts table for bulk operations.
+    std::vector<bool> m_selectedImpacts;
+
     /**
      * @brief Saves the current file, handling renames if the filename changed.
      *
@@ -64,16 +74,30 @@ private:
     void saveWithRename(const OniFile<ONCC::Root>& file, int selectedIndex);
 
     /**
+     * @brief Renders the "General" tab containing core ONCC properties.
+     * 
+     * @param file The ONCC file to edit.
+     */
+    void renderGeneralTab(OniFile<ONCC::Root>& file);
+
+    /**
+     * @brief Renders the "Impacts" tab for managing particle effect registrations.
+     * 
+     * @param file The ONCC file to edit.
+     */
+    void renderImpactsTab(OniFile<ONCC::Root>& file);
+
+    /**
      * @brief Helper to get a list of vanilla ONCV file names for dropdowns.
      *
-     * @return A vector of ONCV filenames.
+     * @return A vector of sorted ONCV filenames.
      */
     [[nodiscard]] std::vector<std::string> getVanillaOncvNames() const;
 
     /**
      * @brief Helper to get a list of vanilla TRAC file names for dropdowns.
      *
-     * @return A vector of TRAC filenames.
+     * @return A vector of sorted TRAC filenames.
      */
     [[nodiscard]] std::vector<std::string> getVanillaTracNames() const;
 };

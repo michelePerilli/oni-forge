@@ -5,7 +5,6 @@
 #include <unordered_set>
 
 namespace OniForge::Validation {
-
     /**
      * @brief Searches for an OniFile by its filename stem.
      *
@@ -28,7 +27,7 @@ namespace OniForge::Validation {
     ) {
         auto searchIn = [&](const IOniCatalogService& catalog) -> const OniFile<T>* {
             const auto& files = (catalog.*getFiles)();
-            auto it = std::find_if(files.begin(), files.end(), [&](const auto& f) {
+            auto        it    = std::find_if(files.begin(), files.end(), [&](const auto& f) {
                 return f.path.stem().string() == stem;
             });
             return (it != files.end()) ? &(*it) : nullptr;
@@ -52,21 +51,21 @@ namespace OniForge::Validation {
      */
     template<typename T>
     static auto buildFileMap(
-        const ProjectCatalogService& project,
-        const VanillaCatalogService& vanilla,
+        const ProjectCatalogService&                          project,
+        const VanillaCatalogService&                          vanilla,
         const std::vector<OniFile<T>>& (IOniCatalogService::* getFiles)() const
     ) {
         std::unordered_map<std::string, const OniFile<T>*> map;
 
         auto addToMap = [&](const IOniCatalogService& catalog) {
             const auto& files = (catalog.*getFiles)();
-            for (const auto& file : files) {
+            for (const auto& file: files) {
                 map[file.path.stem().string()] = &file;
             }
         };
 
         addToMap(vanilla);
-        addToMap(project); 
+        addToMap(project);
         return map;
     }
 
@@ -80,8 +79,8 @@ namespace OniForge::Validation {
 
         // 1. Collect impacts registered in the ONCC's ONCP block
         std::unordered_set<std::string> registeredParticles;
-        for (const auto& particle : onccFile.data.oncp.particles) {
-            registeredParticles.insert(particle.name);
+        for (const auto& [name, type, modifier]: onccFile.data.onia.impacts) {
+            registeredParticles.insert(name);
         }
 
         // 2. Resolve the TRAC (Animation Collection) stem
@@ -98,7 +97,7 @@ namespace OniForge::Validation {
         std::unordered_set<std::string> missingImpactsSet;
         std::unordered_set<std::string> processedTrams;
 
-        for (const auto& tracAnim : tracFile->data.animations) {
+        for (const auto& tracAnim: tracFile->data.animations) {
             const std::string& tramStem = tracAnim.animation;
             if (tramStem.empty()) continue;
 
@@ -119,11 +118,10 @@ namespace OniForge::Validation {
         }
 
         // 6. Populate result with unique missing impacts
-        for (const auto& missing : missingImpactsSet) {
+        for (const auto& missing: missingImpactsSet) {
             result.unregisteredImpacts.push_back(missing);
         }
 
         return result;
     }
-
 } // namespace OniForge::Validation

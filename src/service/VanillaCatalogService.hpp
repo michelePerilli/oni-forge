@@ -49,10 +49,28 @@ public:
     [[nodiscard]] const std::vector<OniFile<ONCV::Root>>& getOncvFiles() const override;
 
     /**
+     * @brief Retrieves a list of sorted vanilla ONCV file names for dropdowns.
+     *
+     * This method uses a cache to avoid repeated sorting and path manipulations.
+     *
+     * @return A reference to the vector of sorted ONCV filenames.
+     */
+    std::vector<std::string>& getVanillaOncvNames();
+
+    /**
      * @brief Retrieves the list of loaded vanilla TRAC (Animation Collection) files.
      * @return A constant reference to the vector of TRAC files.
      */
     [[nodiscard]] const std::vector<OniFile<TRAC::Root>>& getTracFiles() const override;
+
+    /**
+     * @brief Retrieves a list of sorted vanilla TRAC file names for dropdowns.
+     *
+     * This method uses a cache to avoid repeated sorting and path manipulations.
+     *
+     * @return A vector of sorted TRAC filenames.
+     */
+    std::vector<std::string> getVanillaTracNames();
 
     /**
      * @brief Retrieves the list of loaded vanilla TRAM (Animation Mapping) files.
@@ -66,7 +84,15 @@ private:
 
     std::vector<OniFile<ONCC::Root>> m_onccFiles;   ///< Storage for loaded ONCC files.
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;   ///< Storage for loaded ONCV files.
+    
+    std::vector<std::string> m_oncvNamesCache;      ///< Cached sorted names of ONCV files.
+    bool m_oncvNamesCacheDirty = true;              ///< Flag to refresh ONCV cache.
+
     std::vector<OniFile<TRAC::Root>> m_tracFiles;   ///< Storage for loaded TRAC files.
+    
+    std::vector<std::string> m_tracNamesCache;      ///< Cached sorted names of TRAC files.
+    bool m_tracNamesCacheDirty = true;              ///< Flag to refresh TRAC cache.
+
     std::vector<OniFile<TRAM::Root>> m_tramFiles;   ///< Storage for loaded TRAM files.
 
     /**
