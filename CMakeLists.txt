@@ -77,6 +77,7 @@ set(SOURCES
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp
         src/component/xml/XmlWriter.cpp
+        src/component/validation/OniValidator.cpp
         src/repository/ONCCRepository.cpp
         src/repository/ONCVRepository.cpp
         src/repository/TRACRepository.cpp

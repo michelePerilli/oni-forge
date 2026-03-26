@@ -1,14 +1,15 @@
 #include "gui/views/ONCCView.hpp"
-
+#include "component/validation/OniValidator.hpp"
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
 #include <cstring>
 
 ONCCView::ONCCView(const VanillaCatalogService& vanilla,
-                       ProjectCatalogService&       project)
+                   ProjectCatalogService&       project)
     : m_vanilla(vanilla)
-    , m_project(project) {}
+      , m_project(project) {
+}
 
 void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 120.0f;
@@ -18,9 +19,8 @@ void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedInde
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Name:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(fieldWidth);
-    {
-        char buf[256];
+    ImGui::SetNextItemWidth(fieldWidth); {
+        char              buf[256];
         const std::string stem = file.path.stem().string();
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
@@ -34,12 +34,15 @@ void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedInde
 }
 
 void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
-    // Snapshot path on first encounter of this index
     if (!m_originalPaths.contains(selectedIndex))
         m_originalPaths[selectedIndex] = file.path;
 
-    ONCC::ONCC& oncc = file.data.oncc;
-
+    ONCC::ONCC& oncc           = file.data.oncc;
+    static bool needValidation = true;
+    if (needValidation) {
+        OniForge::Validation::checkOnccImpacts(file, m_project, m_vanilla);
+        needValidation = false;
+    }
     constexpr float labelWidth = 120.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
 
@@ -49,7 +52,7 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         std::string& current = oncc.variant;
-        static bool wasOpen = false;
+        static bool  wasOpen = false;
         if (ImGui::BeginCombo("##variant", current.c_str())) {
             static char filter[128] = {};
             if (!wasOpen) {
@@ -66,14 +69,14 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
 
             // Project files
             ImGui::SeparatorText("Project");
-            for (const auto& [path, data] : m_project.getOncvFiles()) {
+            for (const auto& [path, data]: m_project.getOncvFiles()) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false;
                 if (ImGui::Selectable(name.c_str(), selected)) {
-                    current = name;
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -81,14 +84,14 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
 
             // Vanilla files
             ImGui::SeparatorText("Vanilla");
-            for (const auto& [path, data] : m_vanilla.getOncvFiles()) {
+            for (const auto& [path, data]: m_vanilla.getOncvFiles()) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false;
                 if (ImGui::Selectable(name.c_str(), selected)) {
-                    current = name;
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -107,7 +110,7 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         std::string& current = oncc.animations;
-        static bool wasOpen = false;
+        static bool  wasOpen = false;
         if (ImGui::BeginCombo("##animations", current.c_str())) {
             static char filter[128] = {};
             if (!wasOpen) {
@@ -124,14 +127,14 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
 
             // Project files
             ImGui::SeparatorText("Project");
-            for (const auto& [path, data] : m_project.getTracFiles()) {
+            for (const auto& [path, data]: m_project.getTracFiles()) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false;
                 if (ImGui::Selectable(name.c_str(), selected)) {
-                    current = name;
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -139,14 +142,14 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
 
             // Vanilla files
             ImGui::SeparatorText("Vanilla");
-            for (const auto& [path, data] : m_vanilla.getTracFiles()) {
+            for (const auto& [path, data]: m_vanilla.getTracFiles()) {
                 const std::string name = path.stem().string();
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false;
                 if (ImGui::Selectable(name.c_str(), selected)) {
-                    current = name;
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -159,14 +162,15 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
         }
     }
 
-    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     // Health
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Health:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(120.0f);
-    {
+    ImGui::SetNextItemWidth(120.0f); {
         char buf[64];
         strncpy(buf, oncc.health.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
@@ -177,29 +181,31 @@ void ONCCView::render(OniFile<ONCC::Root>& file, const int selectedIndex) {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Weapon Hand:");
     ImGui::SameLine(labelWidth);
-    ImGui::SetNextItemWidth(120.0f);
-    {
+    ImGui::SetNextItemWidth(120.0f); {
         char buf[64];
         strncpy(buf, oncc.weaponHand.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
         if (ImGui::InputText("##weaponhand", buf, sizeof(buf))) oncc.weaponHand = buf;
     }
 
-    ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     // Flags
     bool hasDaodan = (oncc.hasDaodanPowers == "1");
-    bool hasSuper  = (oncc.hasSupershield  == "1");
-    bool cantTouch = (oncc.cantTouchThis   == "1");
+    bool hasSuper  = (oncc.hasSupershield == "1");
+    bool cantTouch = (oncc.cantTouchThis == "1");
 
     if (ImGui::Checkbox("Has Daodan Powers", &hasDaodan)) oncc.hasDaodanPowers = hasDaodan ? "1" : "0";
-    if (ImGui::Checkbox("Has Supershield",   &hasSuper))  oncc.hasSupershield  = hasSuper  ? "1" : "0";
-    if (ImGui::Checkbox("Can't Touch This",  &cantTouch)) oncc.cantTouchThis   = cantTouch ? "1" : "0";
+    if (ImGui::Checkbox("Has Supershield", &hasSuper)) oncc.hasSupershield = hasSuper ? "1" : "0";
+    if (ImGui::Checkbox("Can't Touch This", &cantTouch)) oncc.cantTouchThis = cantTouch ? "1" : "0";
 }
 
 void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
-        if (const auto& original = m_originalPaths[selectedIndex]; original != file.path && std::filesystem::exists(original))
+        if (const auto& original = m_originalPaths[selectedIndex];
+            original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalPaths[selectedIndex] = file.path;
     }
@@ -208,7 +214,7 @@ void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selecte
 
 std::vector<std::string> ONCCView::getVanillaOncvNames() const {
     std::vector<std::string> names;
-    for (const auto& [path, data] : m_vanilla.getOncvFiles())
+    for (const auto& [path, data]: m_vanilla.getOncvFiles())
         names.push_back(path.stem().string());
     std::ranges::sort(names);
     return names;
@@ -216,7 +222,7 @@ std::vector<std::string> ONCCView::getVanillaOncvNames() const {
 
 std::vector<std::string> ONCCView::getVanillaTracNames() const {
     std::vector<std::string> names;
-    for (const auto& [path, data] : m_vanilla.getTracFiles())
+    for (const auto& [path, data]: m_vanilla.getTracFiles())
         names.push_back(path.stem().string());
     std::ranges::sort(names);
     return names;
