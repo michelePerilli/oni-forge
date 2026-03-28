@@ -25,7 +25,11 @@ std::optional<OniFile<ONCC::Root>> ONCCRepository::load(const std::string& fileP
         return std::nullopt;
     }
 
-    return OniFile<ONCC::Root>{ filePath, *root };
+    return OniFile<ONCC::Root>{ 
+        std::filesystem::path(filePath), 
+        std::filesystem::path(filePath).stem().string(), 
+        *root 
+    };
 }
 
 bool ONCCRepository::save(const OniFile<ONCC::Root>& file) const {

@@ -42,7 +42,7 @@ void AddFileModal::render() {
     auto renderGroup = [&](const char* label, const auto& files) {
         if (ImGui::CollapsingHeader(label, ImGuiTreeNodeFlags_DefaultOpen)) {
             for (const auto& file: files) {
-                const std::string stem      = file.path.stem().string();
+                const std::string& stem      = file.name;
                 bool              checked   = m_pendingFiles.contains(stem);
                 const bool        inProject = isInProject(stem);
                 if (inProject) ImGui::BeginDisabled();
@@ -105,11 +105,11 @@ void AddFileModal::render() {
 }
 
 bool AddFileModal::isInProject(const std::string& stem) const {
-    for (const auto& [path, data]: m_project.getOnccFiles())
-        if (path.stem().string() == stem) return true;
-    for (const auto& [path, data]: m_project.getOncvFiles())
-        if (path.stem().string() == stem) return true;
-    for (const auto& [path, data]: m_project.getTracFiles())
-        if (path.stem().string() == stem) return true;
+    for (const auto& file: m_project.getOnccFiles())
+        if (file.name == stem) return true;
+    for (const auto& file: m_project.getOncvFiles())
+        if (file.name == stem) return true;
+    for (const auto& file: m_project.getTracFiles())
+        if (file.name == stem) return true;
     return false;
 }

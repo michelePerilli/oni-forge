@@ -28,7 +28,7 @@ namespace OniForge::Validation {
         auto searchIn = [&](const IOniCatalogService& catalog) -> const OniFile<T>* {
             const auto& files = (catalog.*getFiles)();
             auto        it    = std::find_if(files.begin(), files.end(), [&](const auto& f) {
-                return f.path.stem().string() == stem;
+                return f.name == stem;
             });
             return (it != files.end()) ? &(*it) : nullptr;
         };
@@ -60,7 +60,7 @@ namespace OniForge::Validation {
         auto addToMap = [&](const IOniCatalogService& catalog) {
             const auto& files = (catalog.*getFiles)();
             for (const auto& file: files) {
-                map[file.path.stem().string()] = &file;
+                map[file.name] = &file;
             }
         };
 
@@ -75,7 +75,7 @@ namespace OniForge::Validation {
         const VanillaCatalogService& vanilla
     ) {
         OnccImpactValidationResult result;
-        result.onccStem = onccFile.path.stem().string();
+        result.onccStem = onccFile.name;
 
         // 1. Collect impacts registered in the ONCC's ONCP block
         std::unordered_set<std::string> registeredParticles;

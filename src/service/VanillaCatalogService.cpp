@@ -29,10 +29,6 @@ void VanillaCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     loadTracFiles(folderPath);
     loadTramFiles(folderPath);
 
-    m_onccNamesCacheDirty = true;
-    m_oncvNamesCacheDirty = true;
-    m_tracNamesCacheDirty = true;
-    m_tramNamesCacheDirty = true;
 
     m_logger.info("[VanillaCatalogService] Loaded " +
                   std::to_string(m_onccFiles.size()) + " ONCC, " +
@@ -48,20 +44,6 @@ const std::vector<OniFile<ONCC::Root>>& VanillaCatalogService::getOnccFiles() co
     return m_onccFiles;
 }
 
-/**
- * @brief Returns sorted names of all vanilla ONCC files, using cache if available.
- */
-std::vector<std::string>& VanillaCatalogService::getVanillaOnccNames() {
-    if (!m_onccNamesCacheDirty)
-        return m_onccNamesCache;
-
-    m_onccNamesCache.clear();
-    for (const auto& [path, data]: m_onccFiles)
-        m_onccNamesCache.push_back(path.stem().string());
-    std::ranges::sort(m_onccNamesCache);
-    m_onccNamesCacheDirty = false;
-    return m_onccNamesCache;
-}
 
 /**
  * @brief Public accessor for ONCV files.
@@ -70,20 +52,6 @@ const std::vector<OniFile<ONCV::Root>>& VanillaCatalogService::getOncvFiles() co
     return m_oncvFiles;
 }
 
-/**
- * @brief Returns sorted names of all vanilla ONCV files, using cache if available.
- */
-std::vector<std::string>& VanillaCatalogService::getVanillaOncvNames() {
-    if (!m_oncvNamesCacheDirty)
-        return m_oncvNamesCache;
-
-    m_oncvNamesCache.clear();
-    for (const auto& [path, data]: m_oncvFiles)
-        m_oncvNamesCache.push_back(path.stem().string());
-    std::ranges::sort(m_oncvNamesCache);
-    m_oncvNamesCacheDirty = false;
-    return m_oncvNamesCache;
-}
 
 /**
  * @brief Public accessor for TRAC files.
@@ -92,20 +60,6 @@ const std::vector<OniFile<TRAC::Root>>& VanillaCatalogService::getTracFiles() co
     return m_tracFiles;
 }
 
-/**
- * @brief Returns sorted names of all vanilla TRAC files, using cache if available.
- */
-std::vector<std::string>& VanillaCatalogService::getVanillaTracNames() {
-    if (!m_tracNamesCacheDirty)
-        return m_tracNamesCache;
-
-    m_tracNamesCache.clear();
-    for (const auto& [path, data]: m_tracFiles)
-        m_tracNamesCache.push_back(path.stem().string());
-    std::ranges::sort(m_tracNamesCache);
-    m_tracNamesCacheDirty = false;
-    return m_tracNamesCache;
-}
 
 /**
  * @brief Public accessor for TRAM files.
@@ -114,20 +68,6 @@ const std::vector<OniFile<TRAM::Root>>& VanillaCatalogService::getTramFiles() co
     return m_tramFiles;
 }
 
-/**
- * @brief Returns sorted names of all vanilla TRAM files, using cache if available.
- */
-std::vector<std::string>& VanillaCatalogService::getVanillaTramNames() {
-    if (!m_tramNamesCacheDirty)
-        return m_tramNamesCache;
-
-    m_tramNamesCache.clear();
-    for (const auto& [path, data]: m_tramFiles)
-        m_tramNamesCache.push_back(path.stem().string());
-    std::ranges::sort(m_tramNamesCache);
-    m_tramNamesCacheDirty = false;
-    return m_tramNamesCache;
-}
 
 /**
  * @brief Scans and loads all .xml files starting with 'ONCC'.

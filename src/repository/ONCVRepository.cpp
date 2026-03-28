@@ -18,7 +18,11 @@ std::optional<OniFile<ONCV::Root>> ONCVRepository::load(const std::string& fileP
     const auto root = parseDocument(document);
     if (!root) return std::nullopt;
 
-    return OniFile<ONCV::Root>{filePath, *root};
+    return OniFile<ONCV::Root>{
+        std::filesystem::path(filePath), 
+        std::filesystem::path(filePath).stem().string(), 
+        *root
+    };
 }
 
 bool ONCVRepository::save(const OniFile<ONCV::Root>& file) const {

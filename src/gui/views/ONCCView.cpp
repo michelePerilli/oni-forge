@@ -37,10 +37,11 @@ void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedInde
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
-        const std::string stem = file.path.stem().string();
+        const std::string& stem = file.name;
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
         if (ImGui::InputText("##filename", buf, sizeof(buf))) {
+            file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
         }
     }
@@ -111,22 +112,22 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##variantlist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& oncvName: m_project.getProjectOncvNames()) {
-                if (filter[0] != '\0' && oncvName.find(filter) == std::string::npos) continue;
-                if (oncvName == current) continue;
-                if (ImGui::Selectable(oncvName.c_str(), false)) {
-                    current   = oncvName;
+            for (const auto& [path, name, data]: m_project.getOncvFiles()) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& oncvName: m_vanilla.getVanillaOncvNames()) {
-                if (filter[0] != '\0' && oncvName.find(filter) == std::string::npos) continue;
-                if (oncvName == current) continue;
-                if (ImGui::Selectable(oncvName.c_str(), false)) {
-                    current   = oncvName;
+            for (const auto& [path, name, data]: m_vanilla.getOncvFiles()) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current   = name;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -156,11 +157,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##animationslist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& tracName: m_project.getProjectTracNames()) {
-                if (filter[0] != '\0' && tracName.find(filter) == std::string::npos) continue;
-                if (tracName == current) continue;
-                if (ImGui::Selectable(tracName.c_str(), false)) {
-                    current          = tracName;
+            for (const auto& [path, name, data]: m_project.getTracFiles()) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current          = name;
                     filter[0]        = '\0';
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();
@@ -168,11 +169,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& tracName: m_vanilla.getVanillaTracNames()) {
-                if (filter[0] != '\0' && tracName.find(filter) == std::string::npos) continue;
-                if (tracName == current) continue;
-                if (ImGui::Selectable(tracName.c_str(), false)) {
-                    current          = tracName;
+            for (const auto& [path, name, data]: m_vanilla.getTracFiles()) {
+                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current          = name;
                     filter[0]        = '\0';
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();

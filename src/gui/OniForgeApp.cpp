@@ -281,7 +281,7 @@ void OniForgeApp::renderLeftPanel() {
         const std::string header = "ONCC (" + std::to_string(onccFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(onccFiles.size()); ++i) {
-                const std::string name = onccFiles[i].path.stem().string();
+                const std::string& name = onccFiles[i].name;
                 if (const bool selected = (m_selectedOnccIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedOnccIndex = i;
                     m_selectedOncvIndex = -1;
@@ -296,7 +296,7 @@ void OniForgeApp::renderLeftPanel() {
         const std::string header = "ONCV (" + std::to_string(oncvFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(oncvFiles.size()); ++i) {
-                const std::string name = oncvFiles[i].path.stem().string();
+                const std::string& name = oncvFiles[i].name;
                 if (const bool selected = (m_selectedOncvIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedOncvIndex = i;
                     m_selectedOnccIndex = -1;
@@ -311,7 +311,7 @@ void OniForgeApp::renderLeftPanel() {
         const std::string header = "TRAC (" + std::to_string(tracFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(tracFiles.size()); ++i) {
-                const std::string name = tracFiles[i].path.stem().string();
+                const std::string& name = tracFiles[i].name;
                 if (const bool selected = (m_selectedTracIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedTracIndex = i;
                     m_selectedOnccIndex = -1;
@@ -327,7 +327,7 @@ void OniForgeApp::renderLeftPanel() {
         const std::string header = "TRAM (" + std::to_string(tramFiles.size()) + ")";
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(tramFiles.size()); ++i) {
-                const std::string name = tramFiles[i].path.stem().string();
+                const std::string& name = tramFiles[i].name;
                 if (const bool selected = (m_selectedTramIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedTramIndex = i;
                     m_selectedOnccIndex = -1;

@@ -17,7 +17,11 @@ std::optional<OniFile<TRAC::Root>> TRACRepository::load(const std::string& fileP
     const auto root = parseDocument(document);
     if (!root) return std::nullopt;
 
-    return OniFile<TRAC::Root>{ filePath, *root };
+    return OniFile<TRAC::Root>{ 
+        std::filesystem::path(filePath), 
+        std::filesystem::path(filePath).stem().string(), 
+        *root 
+    };
 }
 
 bool TRACRepository::save(const OniFile<TRAC::Root>& file) const {

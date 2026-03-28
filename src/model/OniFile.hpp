@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <string>
 #include <string_view>
 
 /**
@@ -14,6 +15,8 @@ template<typename T>
 struct OniFile {
     /// @brief The source path of the file on disk.
     std::filesystem::path path;
+    /// @brief The cached stem of the filename (without extension).
+    std::string name;
     /// @brief The deserialized data struct.
     T data;
 };

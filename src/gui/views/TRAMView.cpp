@@ -6,6 +6,9 @@
 #include <cstring>
 #include <filesystem>
 
+#include "service/ProjectCatalogService.hpp"
+#include "service/VanillaCatalogService.hpp"
+
 // ---------------------------------------------------------------------------
 // Predefined value lists
 // ---------------------------------------------------------------------------
@@ -43,11 +46,13 @@ void TRAMView::renderHeaderRow(OniFile<TRAM::Root>& file, const int selectedInde
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
-        const std::string stem = file.path.stem().string();
+        const std::string& stem = file.name;
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##tramname", buf, sizeof(buf)))
+        if (ImGui::InputText("##tramname", buf, sizeof(buf))) {
+            file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Save##tram", {60, 0}))
@@ -268,7 +273,7 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     const std::string currentAnimLabel = !m_selectedAnimName.empty()
                                              ? m_selectedAnimName
                                              : (tram.animationData
-                                                    ? stripTram(file.path.stem().string())
+                                                    ? stripTram(file.name)
                                                     : "(DAE import)");
 
     ImGui::AlignTextToFramePadding();
@@ -291,15 +296,19 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
             ImGui::BeginChild("##animlist", {0, listHeight}, false);
 
-            for (const auto& [path, data]: m_vanilla.getTramFiles()) {
-                if (!data.animationData) continue;
-                const std::string name        = path.stem().string();
+            for (const auto& [path, name, data]: m_vanilla.getTracFiles()) {
                 const std::string displayName = stripTram(name);
                 if (animFilter[0] != '\0' && displayName.find(animFilter) == std::string::npos)
                     continue;
                 const bool selected = (m_selectedAnimName == displayName);
                 if (ImGui::Selectable(displayName.c_str(), selected)) {
-                    tram.animationData = data.animationData;
+                    // We need to find the data for this name
+                    for (const auto& f: m_vanilla.getTramFiles()) {
+                        if (f.name == name) {
+                            tram.animationData = f.data.animationData;
+                            break;
+                        }
+                    }
                     tram.importPath    = std::nullopt;
                     m_selectedAnimName = displayName;
                     animFilter[0]      = '\0';
@@ -361,13 +370,11 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
                 }
                 // Project files
                 ImGui::SeparatorText("Project");
-                for (const auto& [path, data]: m_project.getTramFiles()) {
-                    const std::string name = path.stem().string();
+                for (const auto& [path, name, data]: m_project.getTramFiles()) {
                     if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
                         continue;
                     if (name == current) continue; // Hide currently selected item
-                    const bool selected = false; // Since we hide the current, it's not in the list
-                    if (ImGui::Selectable(name.c_str(), selected)) {
+                    if (ImGui::Selectable(name.c_str(), false)) {
                         tram.directAnimations[i] = name;
                         filter[i][0]             = '\0';
                         ImGui::CloseCurrentPopup();
@@ -376,13 +383,11 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
 
                 // Vanilla files
                 ImGui::SeparatorText("Vanilla");
-                for (const auto& [path, data]: m_vanilla.getTramFiles()) {
-                    const std::string name = path.stem().string();
+                for (const auto& [path, name, data]: m_vanilla.getTramFiles()) {
                     if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
                         continue;
                     if (name == current) continue; // Hide currently selected item
-                    const bool selected = false; // Since we hide the current, it's not in the list
-                    if (ImGui::Selectable(name.c_str(), selected)) {
+                    if (ImGui::Selectable(name.c_str(), false)) {
                         tram.directAnimations[i] = name;
                         filter[i][0]             = '\0';
                         ImGui::CloseCurrentPopup();

@@ -34,7 +34,11 @@ std::optional<OniFile<TRAM::Root>> TRAMRepository::load(const std::string& fileP
     auto root = parseDocument(document);
     if (!root) return std::nullopt;
 
-    return OniFile<TRAM::Root>{ filePath, *root };
+    return OniFile<TRAM::Root>{ 
+        std::filesystem::path(filePath), 
+        std::filesystem::path(filePath).stem().string(), 
+        *root 
+    };
 }
 
 bool TRAMRepository::save(const OniFile<TRAM::Root>& file) const {

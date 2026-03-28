@@ -21,11 +21,13 @@ void ONCVView::renderHeaderRow(OniFile<ONCV::Root>& file, const int selectedInde
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
-        const std::string stem = file.path.stem().string();
+        const std::string& stem = file.name;
         strncpy(buf, stem.c_str(), sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##oncvname", buf, sizeof(buf)))
+        if (ImGui::InputText("##oncvname", buf, sizeof(buf))) {
+            file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Save##oncv", {60, 0}))
@@ -66,11 +68,11 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
 
             // Project files
             ImGui::SeparatorText("Project");
-            for (const auto& [path, data]: m_project.getOncvFiles()) {
-                const std::string name = path.stem().string();
+            for (const auto& otherFile: m_project.getOncvFiles()) {
+                const std::string& name = otherFile.name;
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
-                if (name == file.path.stem().string())
+                if (name == file.name)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false; // Since we hide the current, it's not in the list
@@ -83,11 +85,11 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
 
             // Vanilla files
             ImGui::SeparatorText("Vanilla");
-            for (const auto& [path, data]: m_vanilla.getOncvFiles()) {
-                const std::string name = path.stem().string();
+            for (const auto& otherFile: m_vanilla.getOncvFiles()) {
+                const std::string& name = otherFile.name;
                 if (filter[0] != '\0' && name.find(filter) == std::string::npos)
                     continue;
-                if (name == file.path.stem().string())
+                if (name == file.name)
                     continue;
                 if (name == current) continue; // Hide currently selected item
                 const bool selected = false; // Since we hide the current, it's not in the list
@@ -153,16 +155,16 @@ void ONCVView::saveWithRename(const OniFile<ONCV::Root>& file, const int selecte
 
 std::vector<std::string> ONCVView::getVanillaOncvNames() const {
     std::vector<std::string> names;
-    for (const auto& [path, data]: m_vanilla.getOncvFiles())
-        names.push_back(path.stem().string());
+    for (const auto& file: m_vanilla.getOncvFiles())
+        names.push_back(file.name);
     std::ranges::sort(names);
     return names;
 }
 
 std::vector<std::string> ONCVView::getVanillaOncvNamesStripped() const {
     std::vector<std::string> names;
-    for (const auto& [path, data]: m_vanilla.getOncvFiles()) {
-        std::string stem = path.stem().string();
+    for (const auto& file: m_vanilla.getOncvFiles()) {
+        std::string stem = file.name;
         if (stem.starts_with("ONCV"))
             stem = stem.substr(4);
         names.push_back(stem);

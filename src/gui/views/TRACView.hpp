@@ -24,7 +24,7 @@ public:
      * @param vanilla Reference to VanillaCatalogService for listing related assets.
      * @param project Reference to ProjectCatalogService for saving updates.
      */
-    explicit TRACView(const VanillaCatalogService& vanilla,
+    explicit TRACView(VanillaCatalogService& vanilla,
                       ProjectCatalogService&       project);
 
     /**
@@ -56,7 +56,7 @@ public:
     void onFileChanged() { m_selectedAnimIndices.clear(); }
 
 private:
-    const VanillaCatalogService& m_vanilla; ///< Service for accessing vanilla data.
+    VanillaCatalogService& m_vanilla; ///< Service for accessing vanilla data.
     ProjectCatalogService&       m_project; ///< Service for saving changes.
 
     /// Maps file index to its original path to detect and handle renames.

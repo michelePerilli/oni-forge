@@ -97,28 +97,10 @@ public:
     [[nodiscard]] const std::vector<OniFile<ONCC::Root>>& getOnccFiles() const override;
 
     /**
-     * @brief Retrieves a list of sorted project ONCC file names for dropdowns.
-     *
-     * This method uses a cache to avoid repeated sorting and path manipulations.
-     *
-     * @return A reference to the vector of sorted ONCC filenames.
-     */
-    std::vector<std::string>& getProjectOnccNames();
-
-    /**
      * @brief Retrieves the collection of loaded ONCV (Character Variant) files.
      * @return A constant reference to the vector of ONCV files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<ONCV::Root>>& getOncvFiles() const override;
-
-    /**
-     * @brief Retrieves a list of sorted project ONCV file names for dropdowns.
-     *
-     * This method uses a cache to avoid repeated sorting and path manipulations.
-     *
-     * @return A reference to the vector of sorted ONCV filenames.
-     */
-    std::vector<std::string>& getProjectOncvNames();
 
     /**
      * @brief Retrieves the collection of loaded TRAC (Animation Collection) files.
@@ -127,54 +109,20 @@ public:
     [[nodiscard]] const std::vector<OniFile<TRAC::Root>>& getTracFiles() const override;
 
     /**
-     * @brief Retrieves a list of sorted project TRAC file names for dropdowns.
-     *
-     * This method uses a cache to avoid repeated sorting and path manipulations.
-     *
-     * @return A vector of sorted TRAC filenames.
-     */
-    std::vector<std::string>& getProjectTracNames();
-
-    /**
      * @brief Retrieves the collection of loaded TRAM (Animation Metadata) files.
      * @return A constant reference to the vector of TRAM files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
-
-    /**
-     * @brief Retrieves a list of sorted project TRAM file names for dropdowns.
-     *
-     * This method uses a cache to avoid repeated sorting and path manipulations.
-     *
-     * @return A reference to the vector of sorted TRAM filenames.
-     */
-    std::vector<std::string>& getProjectTramNames();
 
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry containing repositories for file I/O.
     const IOniCatalogService&    m_vanilla; ///< Reference to the base game data service.
     const ILogger&               m_logger;  ///< Logger for error reporting and info messages.
 
-    std::vector<OniFile<ONCC::Root>> m_onccFiles; ///< Internal storage for project ONCC files.
-    
-    std::vector<std::string> m_onccNamesCache;      ///< Cached sorted names of project ONCC files.
-    bool m_onccNamesCacheDirty = true;              ///< Flag to refresh ONCC cache.
-
-    std::vector<OniFile<ONCV::Root>> m_oncvFiles; ///< Internal storage for project ONCV files.
-    
-    std::vector<std::string> m_oncvNamesCache;      ///< Cached sorted names of project ONCV files.
-    bool m_oncvNamesCacheDirty = true;              ///< Flag to refresh ONCV cache.
-
-    std::vector<OniFile<TRAC::Root>> m_tracFiles; ///< Internal storage for project TRAC files.
-    
-    std::vector<std::string> m_tracNamesCache;      ///< Cached sorted names of project TRAC files.
-    bool m_tracNamesCacheDirty = true;              ///< Flag to refresh TRAC cache.
-
-    std::vector<OniFile<TRAM::Root>> m_tramFiles; ///< Internal storage for project TRAM files.
-    
-    std::vector<std::string> m_tramNamesCache;      ///< Cached sorted names of project TRAM files.
-    bool m_tramNamesCacheDirty = true;              ///< Flag to refresh TRAM cache.
-
+    std::vector<OniFile<ONCC::Root>> m_onccFiles;
+    std::vector<OniFile<ONCV::Root>> m_oncvFiles;
+    std::vector<OniFile<TRAC::Root>> m_tracFiles;
+    std::vector<OniFile<TRAM::Root>> m_tramFiles;
     /**
      * @brief Helper to load ONCC files from the directory.
      * @param folderPath The directory to scan.
