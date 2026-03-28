@@ -70,7 +70,7 @@ public:
      *
      * @return A vector of sorted TRAC filenames.
      */
-    std::vector<std::string> getVanillaTracNames();
+    std::vector<std::string>& getVanillaTracNames();
 
     /**
      * @brief Retrieves the list of loaded vanilla TRAM (Animation Mapping) files.

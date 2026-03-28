@@ -61,7 +61,7 @@ std::vector<std::string>& VanillaCatalogService::getVanillaOncvNames() {
         return m_oncvNamesCache;
 
     m_oncvNamesCache.clear();
-    for (const auto& [path, data]: VanillaCatalogService::getOncvFiles())
+    for (const auto& [path, data]: m_oncvFiles)
         m_oncvNamesCache.push_back(path.stem().string());
     std::ranges::sort(m_oncvNamesCache);
     m_oncvNamesCacheDirty = false;
@@ -78,12 +78,12 @@ const std::vector<OniFile<TRAC::Root>>& VanillaCatalogService::getTracFiles() co
 /**
  * @brief Returns sorted names of all vanilla TRAC files, using cache if available.
  */
-std::vector<std::string> VanillaCatalogService::getVanillaTracNames() {
+std::vector<std::string>& VanillaCatalogService::getVanillaTracNames() {
     if (!m_tracNamesCacheDirty)
         return m_tracNamesCache;
 
     m_tracNamesCache.clear();
-    for (const auto& [path, data]: VanillaCatalogService::getTracFiles())
+    for (const auto& [path, data]: m_tracFiles)
         m_tracNamesCache.push_back(path.stem().string());
     std::ranges::sort(m_tracNamesCache);
     m_tracNamesCacheDirty = false;

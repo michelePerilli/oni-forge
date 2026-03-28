@@ -26,8 +26,8 @@ public:
      * @param vanilla Reference to VanillaCatalogService for listing related assets.
      * @param project Reference to ProjectCatalogService for saving updates.
      */
-    explicit ONCCView(const VanillaCatalogService& vanilla,
-                      ProjectCatalogService&       project);
+    explicit ONCCView(VanillaCatalogService& vanilla,
+                      ProjectCatalogService& project);
 
     /**
      * @brief Renders the header row for the currently selected file.
@@ -50,15 +50,15 @@ public:
     void render(OniFile<ONCC::Root>& file, int selectedIndex);
 
 private:
-    const VanillaCatalogService& m_vanilla; ///< Service for accessing vanilla data.
-    ProjectCatalogService&       m_project; ///< Service for saving changes.
+    VanillaCatalogService& m_vanilla; ///< Service for accessing vanilla data.
+    ProjectCatalogService& m_project; ///< Service for saving changes.
 
     /// Maps file index to its original path for tracking renames.
     std::unordered_map<int, std::filesystem::path> m_originalPaths;
 
     /// Stores the results of the last validation run for impact effects.
     OniForge::Validation::OnccImpactValidationResult m_validationResult;
-    
+
     /// Flag to trigger a fresh validation pass on the next render.
     bool m_needValidation = true;
 
@@ -87,17 +87,4 @@ private:
      */
     void renderImpactsTab(OniFile<ONCC::Root>& file);
 
-    /**
-     * @brief Helper to get a list of vanilla ONCV file names for dropdowns.
-     *
-     * @return A vector of sorted ONCV filenames.
-     */
-    [[nodiscard]] std::vector<std::string> getVanillaOncvNames() const;
-
-    /**
-     * @brief Helper to get a list of vanilla TRAC file names for dropdowns.
-     *
-     * @return A vector of sorted TRAC filenames.
-     */
-    [[nodiscard]] std::vector<std::string> getVanillaTracNames() const;
 };

@@ -15,7 +15,7 @@
  * @param vanilla Reference to the vanilla catalog service for read-only data.
  * @param project Reference to the project catalog service for modifiable data.
  */
-ONCCView::ONCCView(const VanillaCatalogService& vanilla,
+ONCCView::ONCCView(VanillaCatalogService& vanilla,
                    ProjectCatalogService&       project)
     : m_vanilla(vanilla)
       , m_project(project) {
@@ -111,24 +111,22 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##variantlist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& [path, data]: m_project.getOncvFiles()) {
-                const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current   = name;
+            for (const auto& oncvName: m_project.getProjectOncvNames()) {
+                if (filter[0] != '\0' && oncvName.find(filter) == std::string::npos) continue;
+                if (oncvName == current) continue;
+                if (ImGui::Selectable(oncvName.c_str(), false)) {
+                    current   = oncvName;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& [path, data]: m_vanilla.getOncvFiles()) {
-                const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current   = name;
+            for (const auto& oncvName: m_vanilla.getVanillaOncvNames()) {
+                if (filter[0] != '\0' && oncvName.find(filter) == std::string::npos) continue;
+                if (oncvName == current) continue;
+                if (ImGui::Selectable(oncvName.c_str(), false)) {
+                    current   = oncvName;
                     filter[0] = '\0';
                     ImGui::CloseCurrentPopup();
                 }
@@ -158,12 +156,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##animationslist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& [path, data]: m_project.getTracFiles()) {
-                const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current          = name;
+            for (const auto& tracName: m_project.getProjectTracNames()) {
+                if (filter[0] != '\0' && tracName.find(filter) == std::string::npos) continue;
+                if (tracName == current) continue;
+                if (ImGui::Selectable(tracName.c_str(), false)) {
+                    current          = tracName;
                     filter[0]        = '\0';
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();
@@ -171,12 +168,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& [path, data]: m_vanilla.getTracFiles()) {
-                const std::string name = path.stem().string();
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current          = name;
+            for (const auto& tracName: m_vanilla.getVanillaTracNames()) {
+                if (filter[0] != '\0' && tracName.find(filter) == std::string::npos) continue;
+                if (tracName == current) continue;
+                if (ImGui::Selectable(tracName.c_str(), false)) {
+                    current          = tracName;
                     filter[0]        = '\0';
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();
@@ -277,7 +273,7 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
             bool isSelected = m_selectedImpacts[i];
             if (ImGui::Checkbox("##sel", &isSelected)) {
                 m_selectedImpacts[i] = isSelected;
-            };
+            }
 
             auto renderCell = [&](const char* id, std::string& val, bool triggerValid = false) {
                 ImGui::TableNextColumn();
@@ -333,28 +329,4 @@ void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selecte
         m_originalPaths[selectedIndex] = file.path;
     }
     m_project.saveToFolder(file.path.parent_path());
-}
-
-/**
- * @brief Retrieves a sorted list of all available vanilla ONCV stems.
- * @return A vector of strings containing the stems of vanilla ONCV files.
- */
-std::vector<std::string> ONCCView::getVanillaOncvNames() const {
-    std::vector<std::string> names;
-    for (const auto& [path, data]: m_vanilla.getOncvFiles())
-        names.push_back(path.stem().string());
-    std::ranges::sort(names);
-    return names;
-}
-
-/**
- * @brief Retrieves a sorted list of all available vanilla TRAC stems.
- * @return A vector of strings containing the stems of vanilla TRAC files.
- */
-std::vector<std::string> ONCCView::getVanillaTracNames() const {
-    std::vector<std::string> names;
-    for (const auto& [path, data]: m_vanilla.getTracFiles())
-        names.push_back(path.stem().string());
-    std::ranges::sort(names);
-    return names;
 }
