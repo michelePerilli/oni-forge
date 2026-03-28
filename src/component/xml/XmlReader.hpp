@@ -14,6 +14,10 @@ class ILogger;
  */
 class XmlReader {
 public:
+    /**
+     * @brief Constructs an XmlReader with the given logger.
+     * @param logger The logger to use for reporting errors and progress.
+     */
     explicit XmlReader(ILogger& logger);
 
     /**

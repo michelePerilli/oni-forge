@@ -18,6 +18,7 @@
  */
 class OniSplitService {
 public:
+    /// @brief Callback function type for streaming process output.
     using OutputCallback = std::function<void(const std::string& line)>;
 
     /**
@@ -46,8 +47,8 @@ public:
                   const OutputCallback&        onOutput) const;
 
 private:
-    std::filesystem::path m_oniSplitPath;  // path to onisplit.exe
-    std::filesystem::path m_oniGamePath;   // path to Oni installation folder
+    std::filesystem::path m_oniSplitPath;  ///< Path to onisplit.exe.
+    std::filesystem::path m_oniGamePath;   ///< Path to Oni installation folder.
 
     static constexpr std::string_view DAT_NAME         = "level0_alpha.dat";
     static constexpr std::string_view GAME_DATA_FOLDER = "GameDataFolder";
@@ -55,12 +56,19 @@ private:
 
     /**
      * @brief Executes a shell command and streams its output.
+     * @param command The command to execute.
+     * @param onOutput Callback for streaming output.
+     * @return true if the process finished with exit code 0.
      */
     bool runProcess(const std::string&    command,
                     const OutputCallback& onOutput) const;
 
     /**
      * @brief Converts XML files to .oni binary files.
+     * @param xmlPath Path to the source XML files.
+     * @param oniPath Path where the output .oni files will be written.
+     * @param onOutput Callback for streaming output.
+     * @return true on success.
      */
     bool convertXmlToOni(const std::filesystem::path& xmlPath,
                          const std::filesystem::path& oniPath,
@@ -68,7 +76,6 @@ private:
 
     /**
      * @brief Packages .oni files into a .dat level file.
-     *
      * @param oniPath Path containing the source .oni files.
      * @param datPath Path where the output .dat file will be created.
      * @param useSep  Controls the import format (-import:sep vs -import:nosep).
@@ -82,12 +89,17 @@ private:
 
     /**
      * @brief Copies the generated .dat file to the game directory.
+     * @param datPath Path to the source .dat file.
+     * @param onOutput Callback for streaming output.
+     * @return true on success.
      */
     bool copyDat(const std::filesystem::path& datPath,
                  const OutputCallback&        onOutput) const;
 
     /**
      * @brief Launches the Oni game executable.
+     * @param onOutput Callback for streaming output.
+     * @return true on success.
      */
     bool launchOni(const OutputCallback& onOutput) const;
 };

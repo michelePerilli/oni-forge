@@ -15,8 +15,12 @@
  * requires data access.
  */
 struct OniRepositoryRegistry {
-    const ONCCRepository& oncc; ///< Repository for ONCC (Character Class) files.
-    const ONCVRepository& oncv; ///< Repository for ONCV (Character Variant) files.
-    const TRACRepository& trac; ///< Repository for TRAC (Animation Collection) files.
-    const TRAMRepository& tram; ///< Repository for TRAM (Animation Metadata) files.
+    /// @brief Repository for ONCC (Character Class) files.
+    const ONCCRepository& oncc;
+    /// @brief Repository for ONCV (Character Variant) files.
+    const ONCVRepository& oncv;
+    /// @brief Repository for TRAC (Animation Collection) files.
+    const TRACRepository& trac;
+    /// @brief Repository for TRAM (Animation Metadata) files.
+    const TRAMRepository& tram;
 };

@@ -49,11 +49,13 @@ public:
 
     /**
      * @brief Returns whether the document has been loaded successfully.
+     * @return True if the document is loaded, false otherwise.
      */
     [[nodiscard]] bool isLoaded() const;
 
     /**
      * @brief Returns the last error message, if any.
+     * @return A string containing the last error message.
      */
     [[nodiscard]] const std::string& getLastError() const;
 
@@ -62,9 +64,14 @@ public:
      *
      * This method should only be used by XmlReader and XmlWriter.
      * Do NOT use this in ModManager or other high-level classes.
+     * @return Reference to the underlying pugi::xml_document.
      */
     [[nodiscard]] pugi::xml_document& getRawDocument();
 
+    /**
+     * @brief Provides raw access to the underlying pugi::xml_document (const).
+     * @return Const reference to the underlying pugi::xml_document.
+     */
     [[nodiscard]] const pugi::xml_document& getRawDocument() const;
 
 private:

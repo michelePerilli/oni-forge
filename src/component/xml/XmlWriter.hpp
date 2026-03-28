@@ -14,6 +14,10 @@ class ILogger;
  */
 class XmlWriter {
 public:
+    /**
+     * @brief Constructs an XmlWriter with the given logger.
+     * @param logger The logger to use for reporting errors and progress.
+     */
     explicit XmlWriter(ILogger& logger);
 
     /**

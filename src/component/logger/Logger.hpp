@@ -29,12 +29,27 @@ public:
 
     Logger& operator=(Logger&&) = delete;
 
+    /**
+     * @brief Logs an informational message.
+     * @param message The message to log.
+     */
     void info(const std::string& message) const override;
 
+    /**
+     * @brief Logs a warning message.
+     * @param message The message to log.
+     */
     void warning(const std::string& message) const override;
 
+    /**
+     * @brief Logs an error message.
+     * @param message The message to log.
+     */
     void error(const std::string& message) const override;
 
+    /**
+     * @brief Logs a visual separator in the log.
+     */
     void separator() const override;
 
 private:
