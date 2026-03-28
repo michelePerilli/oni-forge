@@ -28,8 +28,10 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     loadTracFiles(folderPath);
     loadTramFiles(folderPath);
 
+    m_onccNamesCacheDirty = true;
     m_oncvNamesCacheDirty = true;
     m_tracNamesCacheDirty = true;
+    m_tramNamesCacheDirty = true;
 
     m_logger.info("[ProjectCatalogService] Loaded " +
                   std::to_string(m_onccFiles.size()) + " ONCC, " +
@@ -133,6 +135,7 @@ bool ProjectCatalogService::createOnccFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getOnccFiles()) {
         if (file.path.stem().string() == name) {
             m_onccFiles.push_back(file);
+            m_onccNamesCacheDirty = true;
             m_logger.info("[ProjectCatalogService] Added ONCC from vanilla: " + name);
             return true;
         }
@@ -171,6 +174,7 @@ bool ProjectCatalogService::createTramFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getTramFiles()) {
         if (file.path.stem().string() == name) {
             m_tramFiles.push_back(file);
+            m_tramNamesCacheDirty = true;
             m_logger.info("[ProjectCatalogService] Added TRAM from vanilla: " + name);
             return true;
         }
@@ -185,6 +189,18 @@ bool ProjectCatalogService::createTramFromVanilla(const std::string& name) {
 
 const std::vector<OniFile<ONCC::Root>>& ProjectCatalogService::getOnccFiles() const {
     return m_onccFiles;
+}
+
+std::vector<std::string>& ProjectCatalogService::getProjectOnccNames() {
+    if (m_onccNamesCacheDirty) {
+        m_onccNamesCache.clear();
+        for (const auto& file: m_onccFiles) {
+            m_onccNamesCache.push_back(file.path.stem().string());
+        }
+        std::ranges::sort(m_onccNamesCache);
+        m_onccNamesCacheDirty = false;
+    }
+    return m_onccNamesCache;
 }
 
 const std::vector<OniFile<ONCV::Root>>& ProjectCatalogService::getOncvFiles() const {
@@ -221,4 +237,16 @@ std::vector<std::string>& ProjectCatalogService::getProjectTracNames() {
 
 const std::vector<OniFile<TRAM::Root>>& ProjectCatalogService::getTramFiles() const {
     return m_tramFiles;
+}
+
+std::vector<std::string>& ProjectCatalogService::getProjectTramNames() {
+    if (m_tramNamesCacheDirty) {
+        m_tramNamesCache.clear();
+        for (const auto& file: m_tramFiles) {
+            m_tramNamesCache.push_back(file.path.stem().string());
+        }
+        std::ranges::sort(m_tramNamesCache);
+        m_tramNamesCacheDirty = false;
+    }
+    return m_tramNamesCache;
 }
