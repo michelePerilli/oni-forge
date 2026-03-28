@@ -1,7 +1,7 @@
 #include "gui/views/TRACView.hpp"
+#include "gui/OniUI.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <filesystem>
 #include <imgui.h>
 #include <unordered_map>
@@ -15,19 +15,25 @@ TRACView::TRACView(VanillaCatalogService& vanilla,
 void TRACView::renderHeaderRow(OniFile<TRAC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-    ImGui::SeparatorText("TRAC");
+    
+    std::string title = "Animation Collection (TRAC)";
+
+    OniUI::PushFileStatusColor(file.status);
+    ImGui::SeparatorText(title.c_str());
+    OniUI::PopFileStatusColor();
+
     // Name + Save
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Name:");
+    ImGui::TextUnformatted("File Name:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
         const std::string& stem = file.name;
-        strncpy(buf, stem.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
+        std::snprintf(buf, sizeof(buf), "%s", stem.c_str());
         if (ImGui::InputText("##tracname", buf, sizeof(buf))) {
             file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
         }
     }
     ImGui::SameLine();
@@ -68,26 +74,28 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
             ImGui::BeginChild("##list", {0, listHeight}, false);
             // Project files
             ImGui::SeparatorText("Project");
-            for (const auto& [path, name, data] : m_project.getTracFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+            for (const auto& f : m_project.getTracFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos)
                     continue;
-                if (name == current) continue;   // Hide currently selected item
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current = name;
-                    filter[0] = '\0';
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current      = f.name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             // Vanilla files
             ImGui::SeparatorText("Vanilla");
-            for (const auto& [path, name, data]: m_vanilla.getTracFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+            for (const auto& f : m_vanilla.getTracFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos)
                     continue;
-                if (name == current) continue;   // Hide currently selected item
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current = name;
-                    filter[0] = '\0';
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current      = f.name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
@@ -119,6 +127,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         animations.push_back({"1", ""});
         m_selectedAnimIndices.clear();
         m_selectedAnimIndices.insert(animCount);
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
     }
     ImGui::SameLine();
 
@@ -130,6 +139,7 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
             if (idx < static_cast<int>(animations.size()))
                 animations.erase(animations.begin() + idx);
         m_selectedAnimIndices.clear();
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
     }
     if (!anySelected) ImGui::EndDisabled();
 
@@ -169,10 +179,11 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
         // Weight field
         ImGui::SetNextItemWidth(weightWidth); {
             char buf[32];
-            strncpy(buf, anim.weight.c_str(), sizeof(buf) - 1);
-            buf[sizeof(buf) - 1] = '\0';
-            if (ImGui::InputText("##w", buf, sizeof(buf)))
-                anim.weight = buf;
+            std::snprintf(buf, sizeof(buf), "%s", anim.weight.c_str());
+            if (ImGui::InputText("##w", buf, sizeof(buf))) {
+                anim.weight  = buf;
+                if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+            }
         }
         ImGui::SameLine();
 
@@ -202,26 +213,28 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
 
                 // Project files
                 ImGui::SeparatorText("Project");
-                for (const auto& [path, name, data] : m_project.getTracFiles()) {
-                    if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                for (const auto& f : m_project.getTramFiles()) {
+                    if (filter[0] != '\0' && f.name.find(filter) == std::string::npos)
                         continue;
-                    if (name == current) continue; // Hide currently selected item
-                    if (ImGui::Selectable(name.c_str(), false)) {
-                        current = name;
-                        filter[0] = '\0';
+                    if (f.name == current) continue;
+                    if (ImGui::Selectable(f.name.c_str(), false)) {
+                        current      = f.name;
+                        filter[0]    = '\0';
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                         ImGui::CloseCurrentPopup();
                     }
                 }
 
                 // Vanilla files
                 ImGui::SeparatorText("Vanilla");
-                for (const auto& [path, name, data] : m_vanilla.getTracFiles()) {
-                    if (filter[0] != '\0' && name.find(filter) == std::string::npos)
+                for (const auto& f : m_vanilla.getTramFiles()) {
+                    if (filter[0] != '\0' && f.name.find(filter) == std::string::npos)
                         continue;
-                    if (name == current) continue; // Hide currently selected item
-                    if (ImGui::Selectable(name.c_str(), false)) {
-                        current = name;
-                        filter[0] = '\0';
+                    if (f.name == current) continue;
+                    if (ImGui::Selectable(f.name.c_str(), false)) {
+                        current      = f.name;
+                        filter[0]    = '\0';
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                         ImGui::CloseCurrentPopup();
                     }
                 }
@@ -241,12 +254,13 @@ void TRACView::render(OniFile<TRAC::Root>& file, const int selectedIndex) {
     ImGui::EndChild();
 }
 
-void TRACView::saveWithRename(const OniFile<TRAC::Root>& file, const int selectedIndex) {
+void TRACView::saveWithRename(OniFile<TRAC::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
         if (const auto& original = m_originalPaths[selectedIndex];
             original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalPaths[selectedIndex] = file.path;
     }
-    m_project.saveToFolder(file.path.parent_path());
+    m_project.saveFile(file);
+    file.status = FileStatus::Unmodified;
 }

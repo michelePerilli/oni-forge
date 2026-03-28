@@ -46,16 +46,50 @@ public:
      * @brief Saves all loaded project files back to the specified output directory.
      *
      * Iterates through all internal file collections and serializes them to XML in the target folder.
+     * Only files with a status other than Unmodified or Deleted are saved.
      *
      * @param folderPath The destination path for saving files.
      */
     void saveToFolder(const std::filesystem::path& folderPath);
 
     /**
+     * @brief Saves a single ONCC file to disk and resets its status to Unmodified.
+     * @param file Reference to the ONCC file to save.
+     */
+    void saveFile(OniFile<ONCC::Root>& file);
+
+    /**
+     * @brief Saves a single ONCV file to disk and resets its status to Unmodified.
+     * @param file Reference to the ONCV file to save.
+     */
+    void saveFile(OniFile<ONCV::Root>& file);
+
+    /**
+     * @brief Saves a single TRAC file to disk and resets its status to Unmodified.
+     * @param file Reference to the TRAC file to save.
+     */
+    void saveFile(OniFile<TRAC::Root>& file);
+
+    /**
+     * @brief Saves a single TRAM file to disk and resets its status to Unmodified.
+     * @param file Reference to the TRAM file to save.
+     */
+    void saveFile(OniFile<TRAM::Root>& file);
+
+    /**
+     * @brief Marks a file for deletion by setting its status to Deleted.
+     * @param file Reference to the file to mark.
+     */
+    void deleteFile(OniFile<ONCC::Root>& file);
+    void deleteFile(OniFile<ONCV::Root>& file);
+    void deleteFile(OniFile<TRAC::Root>& file);
+    void deleteFile(OniFile<TRAM::Root>& file);
+
+    /**
      * @brief Creates an editable copy of a vanilla ONCC file in the project.
      *
      * Looks up the file in the vanilla catalog by name. If found, a deep copy is added to the project's
-     * collection, allowing for modification without affecting the source.
+     * collection with the 'Created' status.
      *
      * @param name The filename stem (e.g., "ONCCbarabus") to search for in the vanilla catalog.
      * @return true If the file was found in vanilla and successfully added to the project.
@@ -123,6 +157,7 @@ private:
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;
     std::vector<OniFile<TRAC::Root>> m_tracFiles;
     std::vector<OniFile<TRAM::Root>> m_tramFiles;
+
     /**
      * @brief Helper to load ONCC files from the directory.
      * @param folderPath The directory to scan.

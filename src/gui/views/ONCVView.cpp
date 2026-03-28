@@ -1,7 +1,7 @@
 #include "gui/views/ONCVView.hpp"
+#include "gui/OniUI.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <filesystem>
 #include <imgui.h>
 
@@ -14,19 +14,25 @@ ONCVView::ONCVView(const VanillaCatalogService& vanilla,
 void ONCVView::renderHeaderRow(OniFile<ONCV::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-    ImGui::SeparatorText("ONCV");
+    
+    std::string title = "Character Variant (ONCV)";
+
+    OniUI::PushFileStatusColor(file.status);
+    ImGui::SeparatorText(title.c_str());
+    OniUI::PopFileStatusColor();
+
     // Name + Save
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Name:");
+    ImGui::TextUnformatted("File Name:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
         const std::string& stem = file.name;
-        strncpy(buf, stem.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
+        std::snprintf(buf, sizeof(buf), "%s", stem.c_str());
         if (ImGui::InputText("##oncvname", buf, sizeof(buf))) {
             file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
         }
     }
     ImGui::SameLine();
@@ -74,11 +80,11 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
                     continue;
                 if (name == file.name)
                     continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false; // Since we hide the current, it's not in the list
-                if (ImGui::Selectable(name.c_str(), selected)) {
-                    current   = name;
-                    filter[0] = '\0';
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current      = name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
@@ -91,11 +97,11 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
                     continue;
                 if (name == file.name)
                     continue;
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false; // Since we hide the current, it's not in the list
-                if (ImGui::Selectable(name.c_str(), selected)) {
-                    current   = name;
-                    filter[0] = '\0';
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    current      = name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
@@ -117,9 +123,11 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
         const std::string& current = characterClass;
         if (ImGui::BeginCombo("##characterclass", current.c_str())) {
             for (const auto& name: names) {
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false; // Since we hide the current, it's not in the list
-                if (ImGui::Selectable(name.c_str(), selected)) characterClass = name;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    characterClass = name;
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                }
             }
             ImGui::EndCombo();
         }
@@ -134,37 +142,40 @@ void ONCVView::render(OniFile<ONCV::Root>& file, const int selectedIndex) {
         const std::string& current = characterClassHard;
         if (ImGui::BeginCombo("##characterclasshard", current.c_str())) {
             for (const auto& name: names) {
-                if (name == current) continue; // Hide currently selected item
-                const bool selected = false; // Since we hide the current, it's not in the list
-                if (ImGui::Selectable(name.c_str(), selected)) characterClassHard = name;
+                if (name == current) continue;
+                if (ImGui::Selectable(name.c_str(), false)) {
+                    characterClassHard = name;
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                }
             }
             ImGui::EndCombo();
         }
     }
 }
 
-void ONCVView::saveWithRename(const OniFile<ONCV::Root>& file, const int selectedIndex) {
+void ONCVView::saveWithRename(OniFile<ONCV::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
         if (const auto& original = m_originalPaths[selectedIndex];
             original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalPaths[selectedIndex] = file.path;
     }
-    m_project.saveToFolder(file.path.parent_path());
+    m_project.saveFile(file);
+    file.status = FileStatus::Unmodified;
 }
 
 std::vector<std::string> ONCVView::getVanillaOncvNames() const {
     std::vector<std::string> names;
-    for (const auto& file: m_vanilla.getOncvFiles())
-        names.push_back(file.name);
+    for (const auto& f: m_vanilla.getOncvFiles())
+        names.push_back(f.name);
     std::ranges::sort(names);
     return names;
 }
 
 std::vector<std::string> ONCVView::getVanillaOncvNamesStripped() const {
     std::vector<std::string> names;
-    for (const auto& file: m_vanilla.getOncvFiles()) {
-        std::string stem = file.name;
+    for (const auto& f: m_vanilla.getOncvFiles()) {
+        std::string stem = f.name;
         if (stem.starts_with("ONCV"))
             stem = stem.substr(4);
         names.push_back(stem);

@@ -45,7 +45,8 @@ void ProjectCatalogService::loadOnccFiles(const std::filesystem::path& folderPat
             m_logger.warning("[ProjectCatalogService] Failed to load ONCC: " + path.string());
             continue;
         }
-        m_onccFiles.push_back(std::move(*result));
+        auto& file = m_onccFiles.emplace_back(std::move(*result));
+        file.status = FileStatus::Unmodified;
     }
 }
 
@@ -59,7 +60,8 @@ void ProjectCatalogService::loadOncvFiles(const std::filesystem::path& folderPat
             m_logger.warning("[ProjectCatalogService] Failed to load ONCV: " + path.string());
             continue;
         }
-        m_oncvFiles.push_back(std::move(*result));
+        auto& file = m_oncvFiles.emplace_back(std::move(*result));
+        file.status = FileStatus::Unmodified;
     }
 }
 
@@ -73,7 +75,8 @@ void ProjectCatalogService::loadTracFiles(const std::filesystem::path& folderPat
             m_logger.warning("[ProjectCatalogService] Failed to load TRAC: " + path.string());
             continue;
         }
-        m_tracFiles.push_back(std::move(*result));
+        auto& file = m_tracFiles.emplace_back(std::move(*result));
+        file.status = FileStatus::Unmodified;
     }
 }
 
@@ -87,7 +90,8 @@ void ProjectCatalogService::loadTramFiles(const std::filesystem::path& folderPat
             m_logger.warning("[ProjectCatalogService] Failed to load TRAM: " + path.string());
             continue;
         }
-        m_tramFiles.push_back(std::move(*result));
+        auto& file = m_tramFiles.emplace_back(std::move(*result));
+        file.status = FileStatus::Unmodified;
     }
 }
 
@@ -96,30 +100,68 @@ void ProjectCatalogService::loadTramFiles(const std::filesystem::path& folderPat
 // ---------------------------------------------------------------------------
 
 void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath) {
-    m_logger.info("[ProjectCatalogService] Saving project to: " + folderPath.string());
+    m_logger.info("[ProjectCatalogService] Saving modified files to: " + folderPath.string());
 
-    for (const auto& file: m_onccFiles) {
-        if (OniFile<ONCC::Root> out{folderPath / file.path.filename(), file.name, file.data}; !m_repos.oncc.save(out)) {
-            m_logger.error("[ProjectCatalogService] error saving ONCC: " + file.path.filename().string());
-        }
+    for (auto& file: m_onccFiles) {
+        if (file.status != FileStatus::Unmodified && file.status != FileStatus::Deleted) saveFile(file);
     }
-    for (const auto& file: m_oncvFiles) {
-        if (OniFile<ONCV::Root> out{folderPath / file.path.filename(), file.name, file.data}; !m_repos.oncv.save(out)) {
-            m_logger.error("[ProjectCatalogService] error saving ONCV: " + file.path.filename().string());
-        }
+    for (auto& file: m_oncvFiles) {
+        if (file.status != FileStatus::Unmodified && file.status != FileStatus::Deleted) saveFile(file);
     }
-    for (const auto& file: m_tracFiles) {
-        if (OniFile<TRAC::Root> out{folderPath / file.path.filename(), file.name, file.data}; !m_repos.trac.save(out)) {
-            m_logger.error("[ProjectCatalogService] error saving TRAC: " + file.path.filename().string());
-        }
+    for (auto& file: m_tracFiles) {
+        if (file.status != FileStatus::Unmodified && file.status != FileStatus::Deleted) saveFile(file);
     }
-    for (const auto& file: m_tramFiles) {
-        if (OniFile<TRAM::Root> out{folderPath / file.path.filename(), file.name, file.data}; !m_repos.tram.save(out))
-            m_logger.error("[ProjectCatalogService] error saving TRAM: " + file.path.filename().string());
+    for (auto& file: m_tramFiles) {
+        if (file.status != FileStatus::Unmodified && file.status != FileStatus::Deleted) saveFile(file);
     }
 
-    m_logger.info("[ProjectCatalogService] Project saved successfully.");
+    m_logger.info("[ProjectCatalogService] Save completed.");
 }
+
+void ProjectCatalogService::saveFile(OniFile<ONCC::Root>& file) {
+    if (m_repos.oncc.save(file)) {
+        file.status = FileStatus::Unmodified;
+        m_logger.info("[ProjectCatalogService] Saved ONCC: " + file.path.filename().string());
+    } else {
+        m_logger.error("[ProjectCatalogService] Error saving ONCC: " + file.path.filename().string());
+    }
+}
+
+void ProjectCatalogService::saveFile(OniFile<ONCV::Root>& file) {
+    if (m_repos.oncv.save(file)) {
+        file.status = FileStatus::Unmodified;
+        m_logger.info("[ProjectCatalogService] Saved ONCV: " + file.path.filename().string());
+    } else {
+        m_logger.error("[ProjectCatalogService] Error saving ONCV: " + file.path.filename().string());
+    }
+}
+
+void ProjectCatalogService::saveFile(OniFile<TRAC::Root>& file) {
+    if (m_repos.trac.save(file)) {
+        file.status = FileStatus::Unmodified;
+        m_logger.info("[ProjectCatalogService] Saved TRAC: " + file.path.filename().string());
+    } else {
+        m_logger.error("[ProjectCatalogService] Error saving TRAC: " + file.path.filename().string());
+    }
+}
+
+void ProjectCatalogService::saveFile(OniFile<TRAM::Root>& file) {
+    if (m_repos.tram.save(file)) {
+        file.status = FileStatus::Unmodified;
+        m_logger.info("[ProjectCatalogService] Saved TRAM: " + file.path.filename().string());
+    } else {
+        m_logger.error("[ProjectCatalogService] Error saving TRAM: " + file.path.filename().string());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Delete
+// ---------------------------------------------------------------------------
+
+void ProjectCatalogService::deleteFile(OniFile<ONCC::Root>& file) { file.status = FileStatus::Deleted; }
+void ProjectCatalogService::deleteFile(OniFile<ONCV::Root>& file) { file.status = FileStatus::Deleted; }
+void ProjectCatalogService::deleteFile(OniFile<TRAC::Root>& file) { file.status = FileStatus::Deleted; }
+void ProjectCatalogService::deleteFile(OniFile<TRAM::Root>& file) { file.status = FileStatus::Deleted; }
 
 // ---------------------------------------------------------------------------
 // Create from vanilla
@@ -128,7 +170,9 @@ void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath
 bool ProjectCatalogService::createOnccFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getOnccFiles()) {
         if (file.name == name) {
-            m_onccFiles.push_back(file);
+            auto copy = file;
+            copy.status = FileStatus::Created;
+            m_onccFiles.push_back(std::move(copy));
             m_logger.info("[ProjectCatalogService] Added ONCC from vanilla: " + name);
             return true;
         }
@@ -140,7 +184,9 @@ bool ProjectCatalogService::createOnccFromVanilla(const std::string& name) {
 bool ProjectCatalogService::createOncvFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getOncvFiles()) {
         if (file.name == name) {
-            m_oncvFiles.push_back(file);
+            auto copy = file;
+            copy.status = FileStatus::Created;
+            m_oncvFiles.push_back(std::move(copy));
             m_logger.info("[ProjectCatalogService] Added ONCV from vanilla: " + name);
             return true;
         }
@@ -152,7 +198,9 @@ bool ProjectCatalogService::createOncvFromVanilla(const std::string& name) {
 bool ProjectCatalogService::createTracFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getTracFiles()) {
         if (file.name == name) {
-            m_tracFiles.push_back(file);
+            auto copy = file;
+            copy.status = FileStatus::Created;
+            m_tracFiles.push_back(std::move(copy));
             m_logger.info("[ProjectCatalogService] Added TRAC from vanilla: " + name);
             return true;
         }
@@ -164,7 +212,9 @@ bool ProjectCatalogService::createTracFromVanilla(const std::string& name) {
 bool ProjectCatalogService::createTramFromVanilla(const std::string& name) {
     for (const auto& file: m_vanilla.getTramFiles()) {
         if (file.name == name) {
-            m_tramFiles.push_back(file);
+            auto copy = file;
+            copy.status = FileStatus::Created;
+            m_tramFiles.push_back(std::move(copy));
             m_logger.info("[ProjectCatalogService] Added TRAM from vanilla: " + name);
             return true;
         }
@@ -195,4 +245,3 @@ const std::vector<OniFile<TRAC::Root>>& ProjectCatalogService::getTracFiles() co
 const std::vector<OniFile<TRAM::Root>>& ProjectCatalogService::getTramFiles() const {
     return m_tramFiles;
 }
-

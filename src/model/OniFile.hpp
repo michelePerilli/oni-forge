@@ -4,6 +4,17 @@
 #include <string_view>
 
 /**
+ * @brief Represents the current modification state of a project file.
+ * Inspired by IDE status systems (e.g., IntelliJ/CLion).
+ */
+enum class FileStatus {
+    Unmodified, ///< Synchronized with disk.
+    Modified,   ///< Existing file with unsaved changes.
+    Created,    ///< New file not yet written to disk.
+    Deleted     ///< Marked for deletion (not yet removed from disk).
+};
+
+/**
  * @brief Wraps any Oni data struct with its filesystem context.
  *
  * T is the data struct (ONCV, TRAC, TRMA, etc.)
@@ -19,6 +30,8 @@ struct OniFile {
     std::string name;
     /// @brief The deserialized data struct.
     T data;
+    /// @brief Current status of the file in the project.
+    FileStatus status = FileStatus::Unmodified;
 };
 
 /**

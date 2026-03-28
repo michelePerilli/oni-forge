@@ -71,7 +71,7 @@ private:
      * @param file The file to save.
      * @param selectedIndex The index of the file in the project list.
      */
-    void saveWithRename(const OniFile<TRAM::Root>& file, int selectedIndex);
+    void saveWithRename(OniFile<TRAM::Root>& file, int selectedIndex);
 
     /// List of available animation variants for dropdowns.
     static const std::vector<const char*> s_varients;

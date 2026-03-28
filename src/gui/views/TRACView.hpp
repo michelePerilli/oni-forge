@@ -71,5 +71,5 @@ private:
      * @param file The file to save.
      * @param selectedIndex The index of the file in the project list.
      */
-    void saveWithRename(const OniFile<TRAC::Root>& file, int selectedIndex);
+    void saveWithRename(OniFile<TRAC::Root>& file, int selectedIndex);
 };

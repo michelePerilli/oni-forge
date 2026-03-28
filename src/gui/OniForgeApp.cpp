@@ -1,6 +1,6 @@
 #include "gui/OniForgeApp.hpp"
 #include <imgui.h>
-
+#include "gui/OniUI.hpp"
 // ---------------------------------------------------------------------------
 // Constructor
 // ---------------------------------------------------------------------------
@@ -282,12 +282,14 @@ void OniForgeApp::renderLeftPanel() {
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(onccFiles.size()); ++i) {
                 const std::string& name = onccFiles[i].name;
+                OniUI::PushFileStatusColor(onccFiles[i].status);
                 if (const bool selected = (m_selectedOnccIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedOnccIndex = i;
                     m_selectedOncvIndex = -1;
                     m_selectedTracIndex = -1;
                     m_selectedTramIndex = -1;
                 }
+                OniUI::PopFileStatusColor();
             }
         }
     }
@@ -297,12 +299,14 @@ void OniForgeApp::renderLeftPanel() {
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(oncvFiles.size()); ++i) {
                 const std::string& name = oncvFiles[i].name;
+                OniUI::PushFileStatusColor(oncvFiles[i].status);
                 if (const bool selected = (m_selectedOncvIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedOncvIndex = i;
                     m_selectedOnccIndex = -1;
                     m_selectedTracIndex = -1;
                     m_selectedTramIndex = -1;
                 }
+                OniUI::PopFileStatusColor();
             }
         }
     }
@@ -312,6 +316,7 @@ void OniForgeApp::renderLeftPanel() {
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(tracFiles.size()); ++i) {
                 const std::string& name = tracFiles[i].name;
+                OniUI::PushFileStatusColor(tracFiles[i].status);
                 if (const bool selected = (m_selectedTracIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedTracIndex = i;
                     m_selectedOnccIndex = -1;
@@ -319,6 +324,7 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedTramIndex = -1;
                     m_tracView.onFileChanged();
                 }
+                OniUI::PopFileStatusColor();
             }
         }
     }
@@ -328,6 +334,7 @@ void OniForgeApp::renderLeftPanel() {
         if (ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < static_cast<int>(tramFiles.size()); ++i) {
                 const std::string& name = tramFiles[i].name;
+                OniUI::PushFileStatusColor(tramFiles[i].status);
                 if (const bool selected = (m_selectedTramIndex == i); ImGui::Selectable(name.c_str(), selected)) {
                     m_selectedTramIndex = i;
                     m_selectedOnccIndex = -1;
@@ -335,6 +342,7 @@ void OniForgeApp::renderLeftPanel() {
                     m_selectedTracIndex = -1;
                     m_tramView.onFileChanged();
                 }
+                OniUI::PopFileStatusColor();
             }
         }
     }

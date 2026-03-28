@@ -1,10 +1,10 @@
 #include "gui/views/TRAMView.hpp"
+#include "gui/OniUI.hpp"
 
-#include <imgui.h>
-#include <pugixml.hpp>
-#include <algorithm>
 #include <cstring>
 #include <filesystem>
+#include <imgui.h>
+#include <pugixml.hpp>
 
 #include "service/ProjectCatalogService.hpp"
 #include "service/VanillaCatalogService.hpp"
@@ -39,19 +39,25 @@ TRAMView::TRAMView(const VanillaCatalogService& vanilla, ProjectCatalogService& 
 void TRAMView::renderHeaderRow(OniFile<TRAM::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 140.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-    ImGui::SeparatorText("TRAM");
+    
+    std::string title = "Animation Metadata (TRAM)";
+
+    OniUI::PushFileStatusColor(file.status);
+    ImGui::SeparatorText(title.c_str());
+    OniUI::PopFileStatusColor();
+
     // --- Name + Save ---
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Name:");
+    ImGui::TextUnformatted("File Name:");
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
         const std::string& stem = file.name;
-        strncpy(buf, stem.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
+        std::snprintf(buf, sizeof(buf), "%s", stem.c_str());
         if (ImGui::InputText("##tramname", buf, sizeof(buf))) {
             file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
         }
     }
     ImGui::SameLine();
@@ -100,7 +106,10 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             if (ImGui::BeginCombo("##type", tram.lookup.type.c_str())) {
                 for (const char* item: TRAM::animTypes) {
                     const bool selected = (tram.lookup.type == item);
-                    if (ImGui::Selectable(item, selected)) tram.lookup.type = item;
+                    if (ImGui::Selectable(item, selected)) {
+                        tram.lookup.type = item;
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
@@ -113,7 +122,10 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             if (ImGui::BeginCombo("##aimingtype", tram.lookup.aimingType.c_str())) {
                 for (const char* item: TRAM::animTypes) {
                     const bool selected = (tram.lookup.aimingType == item);
-                    if (ImGui::Selectable(item, selected)) tram.lookup.aimingType = item;
+                    if (ImGui::Selectable(item, selected)) {
+                        tram.lookup.aimingType = item;
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
@@ -129,7 +141,10 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             if (ImGui::BeginCombo("##fromstate", tram.lookup.fromState.c_str())) {
                 for (const char* item: TRAM::animStates) {
                     const bool selected = (tram.lookup.fromState == item);
-                    if (ImGui::Selectable(item, selected)) tram.lookup.fromState = item;
+                    if (ImGui::Selectable(item, selected)) {
+                        tram.lookup.fromState = item;
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
@@ -142,23 +157,29 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             if (ImGui::BeginCombo("##tostate", tram.lookup.toState.c_str())) {
                 for (const char* item: TRAM::animStates) {
                     const bool selected = (tram.lookup.toState == item);
-                    if (ImGui::Selectable(item, selected)) tram.lookup.toState = item;
+                    if (ImGui::Selectable(item, selected)) {
+                        tram.lookup.toState = item;
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
 
-            // Row 3 — Varient / First Level
+            // Row 3 — Variant / First Level
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Varient:");
+            ImGui::TextUnformatted("Variant:");
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-1);
             if (ImGui::BeginCombo("##varient", tram.lookup.varient.c_str())) {
                 for (const char* item: s_varients) {
                     const bool selected = (tram.lookup.varient == item);
-                    if (ImGui::Selectable(item, selected)) tram.lookup.varient = item;
+                    if (ImGui::Selectable(item, selected)) {
+                        tram.lookup.varient = item;
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                    }
                     if (selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
@@ -169,10 +190,11 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             ImGui::TableSetColumnIndex(4);
             ImGui::SetNextItemWidth(-1); {
                 char buf[32];
-                strncpy(buf, tram.lookup.firstLevel.c_str(), sizeof(buf) - 1);
-                buf[sizeof(buf) - 1] = '\0';
-                if (ImGui::InputText("##firstlevel", buf, sizeof(buf)))
+                std::snprintf(buf, sizeof(buf), "%s", tram.lookup.firstLevel.c_str());
+                if (ImGui::InputText("##firstlevel", buf, sizeof(buf))) {
                     tram.lookup.firstLevel = buf;
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+                }
             }
 
             ImGui::EndTable();
@@ -188,10 +210,11 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char buf[256];
-        strncpy(buf, tram.flags.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##flags", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.flags.c_str());
+        if (ImGui::InputText("##flags", buf, sizeof(buf))) {
             tram.flags = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 
     ImGui::Spacing();
@@ -204,20 +227,22 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(80.0f); {
         char buf[32];
-        strncpy(buf, tram.atomic.start.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##atomicstart", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.atomic.start.c_str());
+        if (ImGui::InputText("##atomicstart", buf, sizeof(buf))) {
             tram.atomic.start = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
     ImGui::SameLine();
     ImGui::TextUnformatted("->");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(80.0f); {
         char buf[32];
-        strncpy(buf, tram.atomic.end.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##atomicend", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.atomic.end.c_str());
+        if (ImGui::InputText("##atomicend", buf, sizeof(buf))) {
             tram.atomic.end = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 
     // --- Invulnerable ---
@@ -226,20 +251,22 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(80.0f); {
         char buf[32];
-        strncpy(buf, tram.invulnerable.start.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##invulstart", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.invulnerable.start.c_str());
+        if (ImGui::InputText("##invulstart", buf, sizeof(buf))) {
             tram.invulnerable.start = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
     ImGui::SameLine();
     ImGui::TextUnformatted("->");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(80.0f); {
         char buf[32];
-        strncpy(buf, tram.invulnerable.end.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##invulend", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.invulnerable.end.c_str());
+        if (ImGui::InputText("##invulend", buf, sizeof(buf))) {
             tram.invulnerable.end = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 
     ImGui::Spacing();
@@ -254,7 +281,10 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     if (ImGui::BeginCombo("##direction", tram.direction.c_str())) {
         for (const char* item: TRAM::animDirections) {
             const bool selected = (tram.direction == item);
-            if (ImGui::Selectable(item, selected)) tram.direction = item;
+            if (ImGui::Selectable(item, selected)) {
+                tram.direction = item;
+                if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+            }
             if (selected) ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
@@ -296,15 +326,15 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
             const float listHeight = ImGui::GetTextLineHeightWithSpacing() * 6.0f;
             ImGui::BeginChild("##animlist", {0, listHeight}, false);
 
-            for (const auto& [path, name, data]: m_vanilla.getTracFiles()) {
-                const std::string displayName = stripTram(name);
+            for (const auto& f_trac: m_vanilla.getTracFiles()) {
+                const std::string displayName = stripTram(f_trac.name);
                 if (animFilter[0] != '\0' && displayName.find(animFilter) == std::string::npos)
                     continue;
                 const bool selected = (m_selectedAnimName == displayName);
                 if (ImGui::Selectable(displayName.c_str(), selected)) {
                     // We need to find the data for this name
                     for (const auto& f: m_vanilla.getTramFiles()) {
-                        if (f.name == name) {
+                        if (f.name == f_trac.name) {
                             tram.animationData = f.data.animationData;
                             break;
                         }
@@ -312,6 +342,7 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
                     tram.importPath    = std::nullopt;
                     m_selectedAnimName = displayName;
                     animFilter[0]      = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
                 if (selected) ImGui::SetItemDefaultFocus();
@@ -367,29 +398,32 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
                 if (ImGui::Selectable("(none)", current.empty())) {
                     tram.directAnimations[i] = "";
                     filter[i][0]             = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                 }
                 // Project files
                 ImGui::SeparatorText("Project");
-                for (const auto& [path, name, data]: m_project.getTramFiles()) {
-                    if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
+                for (const auto& f: m_project.getTramFiles()) {
+                    if (filter[i][0] != '\0' && f.name.find(filter[i]) == std::string::npos)
                         continue;
-                    if (name == current) continue; // Hide currently selected item
-                    if (ImGui::Selectable(name.c_str(), false)) {
-                        tram.directAnimations[i] = name;
+                    if (f.name == current) continue;
+                    if (ImGui::Selectable(f.name.c_str(), false)) {
+                        tram.directAnimations[i] = f.name;
                         filter[i][0]             = '\0';
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                         ImGui::CloseCurrentPopup();
                     }
                 }
 
                 // Vanilla files
                 ImGui::SeparatorText("Vanilla");
-                for (const auto& [path, name, data]: m_vanilla.getTramFiles()) {
-                    if (filter[i][0] != '\0' && name.find(filter[i]) == std::string::npos)
+                for (const auto& f: m_vanilla.getTramFiles()) {
+                    if (filter[i][0] != '\0' && f.name.find(filter[i]) == std::string::npos)
                         continue;
-                    if (name == current) continue; // Hide currently selected item
-                    if (ImGui::Selectable(name.c_str(), false)) {
-                        tram.directAnimations[i] = name;
+                    if (f.name == current) continue;
+                    if (ImGui::Selectable(f.name.c_str(), false)) {
+                        tram.directAnimations[i] = f.name;
                         filter[i][0]             = '\0';
+                        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                         ImGui::CloseCurrentPopup();
                     }
                 }
@@ -412,10 +446,11 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(fieldWidth); {
         char buf[256];
-        strncpy(buf, tram.impact.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##impact", buf, sizeof(buf)))
+        std::snprintf(buf, sizeof(buf), "%s", tram.impact.c_str());
+        if (ImGui::InputText("##impact", buf, sizeof(buf))) {
             tram.impact = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 }
 
@@ -423,14 +458,15 @@ void TRAMView::render(OniFile<TRAM::Root>& file, const int selectedIndex) {
 // Save
 // ---------------------------------------------------------------------------
 
-void TRAMView::saveWithRename(const OniFile<TRAM::Root>& file, const int selectedIndex) {
+void TRAMView::saveWithRename(OniFile<TRAM::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
         if (const auto& original = m_originalPaths[selectedIndex];
             original != file.path && std::filesystem::exists(original))
             std::filesystem::remove(original);
         m_originalPaths[selectedIndex] = file.path;
     }
-    m_project.saveToFolder(file.path.parent_path());
+    m_project.saveFile(file);
+    file.status = FileStatus::Unmodified;
 }
 
 // ---------------------------------------------------------------------------

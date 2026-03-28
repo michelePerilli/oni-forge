@@ -4,11 +4,11 @@
  */
 
 #include "gui/views/ONCCView.hpp"
-#include "component/validation/OniValidator.hpp"
-#include <imgui.h>
 #include <algorithm>
 #include <filesystem>
-#include <cstring>
+#include <imgui.h>
+#include "component/validation/OniValidator.hpp"
+#include "gui/OniUI.hpp"
 
 /**
  * @brief Constructs an ONCC editor view with references to catalog services.
@@ -29,7 +29,12 @@ ONCCView::ONCCView(VanillaCatalogService& vanilla,
 void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedIndex) {
     constexpr float labelWidth = 120.0f;
     const float     fieldWidth = ImGui::GetContentRegionAvail().x - labelWidth - 80.0f;
-    ImGui::SeparatorText("Character Class (ONCC)");
+    
+    std::string title = "Character Class (ONCC)";
+
+    OniUI::PushFileStatusColor(file.status);
+    ImGui::SeparatorText(title.c_str());
+    OniUI::PopFileStatusColor();
 
     // Filename input and Save button
     ImGui::AlignTextToFramePadding();
@@ -38,11 +43,11 @@ void ONCCView::renderHeaderRow(OniFile<ONCC::Root>& file, const int selectedInde
     ImGui::SetNextItemWidth(fieldWidth); {
         char              buf[256];
         const std::string& stem = file.name;
-        strncpy(buf, stem.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
+        std::snprintf(buf, sizeof(buf), "%s", stem.c_str());
         if (ImGui::InputText("##filename", buf, sizeof(buf))) {
             file.name = buf;
             file.path = file.path.parent_path() / (std::string(buf) + ".xml");
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
         }
     }
     ImGui::SameLine();
@@ -112,23 +117,25 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##variantlist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& [path, name, data]: m_project.getOncvFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current   = name;
-                    filter[0] = '\0';
+            for (const auto& f : m_project.getOncvFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos) continue;
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current      = f.name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& [path, name, data]: m_vanilla.getOncvFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current   = name;
-                    filter[0] = '\0';
+            for (const auto& f : m_vanilla.getOncvFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos) continue;
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current      = f.name;
+                    filter[0]    = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     ImGui::CloseCurrentPopup();
                 }
             }
@@ -157,24 +164,26 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
             ImGui::BeginChild("##animationslist", {0, listHeight}, false);
 
             ImGui::SeparatorText("Project Catalog");
-            for (const auto& [path, name, data]: m_project.getTracFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current          = name;
+            for (const auto& f : m_project.getTracFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos) continue;
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current          = f.name;
                     filter[0]        = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();
                 }
             }
 
             ImGui::SeparatorText("Vanilla Catalog");
-            for (const auto& [path, name, data]: m_vanilla.getTracFiles()) {
-                if (filter[0] != '\0' && name.find(filter) == std::string::npos) continue;
-                if (name == current) continue;
-                if (ImGui::Selectable(name.c_str(), false)) {
-                    current          = name;
+            for (const auto& f : m_vanilla.getTracFiles()) {
+                if (filter[0] != '\0' && f.name.find(filter) == std::string::npos) continue;
+                if (f.name == current) continue;
+                if (ImGui::Selectable(f.name.c_str(), false)) {
+                    current          = f.name;
                     filter[0]        = '\0';
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     m_needValidation = true;
                     ImGui::CloseCurrentPopup();
                 }
@@ -195,9 +204,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(120.0f); {
         char buf[64];
-        strncpy(buf, oncc.health.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##health", buf, sizeof(buf))) oncc.health = buf;
+        std::snprintf(buf, sizeof(buf), "%s", oncc.health.c_str());
+        if (ImGui::InputText("##health", buf, sizeof(buf))) {
+            oncc.health = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 
     ImGui::AlignTextToFramePadding();
@@ -205,9 +216,11 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
     ImGui::SameLine(labelWidth);
     ImGui::SetNextItemWidth(120.0f); {
         char buf[64];
-        strncpy(buf, oncc.weaponHand.c_str(), sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-        if (ImGui::InputText("##weaponhand", buf, sizeof(buf))) oncc.weaponHand = buf;
+        std::snprintf(buf, sizeof(buf), "%s", oncc.weaponHand.c_str());
+        if (ImGui::InputText("##weaponhand", buf, sizeof(buf))) {
+            oncc.weaponHand = buf;
+            if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+        }
     }
 
     ImGui::Spacing();
@@ -219,9 +232,18 @@ void ONCCView::renderGeneralTab(OniFile<ONCC::Root>& file) {
     bool hasSuper  = (oncc.hasSupershield == "1");
     bool cantTouch = (oncc.cantTouchThis == "1");
 
-    if (ImGui::Checkbox("Has Daodan Powers", &hasDaodan)) oncc.hasDaodanPowers = hasDaodan ? "1" : "0";
-    if (ImGui::Checkbox("Has Supershield", &hasSuper)) oncc.hasSupershield = hasSuper ? "1" : "0";
-    if (ImGui::Checkbox("Can't Touch This", &cantTouch)) oncc.cantTouchThis = cantTouch ? "1" : "0";
+    if (ImGui::Checkbox("Has Daodan Powers", &hasDaodan)) {
+        oncc.hasDaodanPowers = hasDaodan ? "1" : "0";
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+    }
+    if (ImGui::Checkbox("Has Supershield", &hasSuper)) {
+        oncc.hasSupershield = hasSuper ? "1" : "0";
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+    }
+    if (ImGui::Checkbox("Can't Touch This", &cantTouch)) {
+        oncc.cantTouchThis = cantTouch ? "1" : "0";
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
+    }
 }
 
 /**
@@ -242,6 +264,7 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
         impacts.push_back({"", "", ""});
         m_selectedImpacts.push_back(false);
         m_needValidation = true;
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
     }
     ImGui::SameLine();
 
@@ -255,6 +278,7 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
             }
         }
         m_needValidation = true;
+        if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
     }
     if (!anySelected) ImGui::EndDisabled();
 
@@ -280,9 +304,10 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-FLT_MIN);
                 char buf[128];
-                snprintf(buf, sizeof(buf), "%s", val.c_str());
+                std::snprintf(buf, sizeof(buf), "%s", val.c_str());
                 if (ImGui::InputText(id, buf, sizeof(buf))) {
                     val = buf;
+                    if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
                     if (triggerValid) m_needValidation = true;
                 }
             };
@@ -310,6 +335,7 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
                 impacts.push_back({impact, "Swt_Super_Punch", "Heavy"});
                 m_selectedImpacts.push_back(false);
                 m_needValidation = true;
+                if (file.status == FileStatus::Unmodified) file.status = FileStatus::Modified;
             }
         }
         ImGui::PopStyleColor();
@@ -321,7 +347,7 @@ void ONCCView::renderImpactsTab(OniFile<ONCC::Root>& file) {
  * @param file The ONCC file to save.
  * @param selectedIndex The index of the file in the open files list.
  */
-void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selectedIndex) {
+void ONCCView::saveWithRename(OniFile<ONCC::Root>& file, const int selectedIndex) {
     if (m_originalPaths.contains(selectedIndex)) {
         if (const auto& original = m_originalPaths[selectedIndex];
             original != file.path && std::filesystem::exists(original)) {
@@ -329,5 +355,6 @@ void ONCCView::saveWithRename(const OniFile<ONCC::Root>& file, const int selecte
         }
         m_originalPaths[selectedIndex] = file.path;
     }
-    m_project.saveToFolder(file.path.parent_path());
+    m_project.saveFile(file);
+    file.status = FileStatus::Unmodified;
 }

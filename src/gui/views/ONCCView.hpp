@@ -71,7 +71,7 @@ private:
      * @param file The file to save.
      * @param selectedIndex The index of the file in the project list.
      */
-    void saveWithRename(const OniFile<ONCC::Root>& file, int selectedIndex);
+    void saveWithRename(OniFile<ONCC::Root>& file, int selectedIndex);
 
     /**
      * @brief Renders the "General" tab containing core ONCC properties.
