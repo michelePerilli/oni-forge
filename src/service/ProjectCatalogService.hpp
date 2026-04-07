@@ -2,12 +2,16 @@
 
 #include <filesystem>
 #include <vector>
+#include <mutex> // Required for std::recursive_mutex
+#include <memory> // Required for std::unique_ptr
 
 #include "service/IOniCatalogService.hpp"
 
 // Forward declarations
 struct OniRepositoryRegistry;
 class ILogger;
+
+#include "FileWatch.hpp"
 
 /**
  * @brief Editable catalog representing the current mod project.
@@ -148,15 +152,25 @@ public:
      */
     [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
 
+    /**
+     * @brief Gets the mutex for thread-safe access to catalog collections.
+     * @return Reference to the recursive mutex.
+     */
+    std::recursive_mutex& getMutex() const { return m_mutex; }
+
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry containing repositories for file I/O.
     const IOniCatalogService&    m_vanilla; ///< Reference to the base game data service.
     const ILogger&               m_logger;  ///< Logger for error reporting and info messages.
 
+    mutable std::recursive_mutex m_mutex; ///< Mutex to protect access to file vectors.
+
     std::vector<OniFile<ONCC::Root>> m_onccFiles;
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;
     std::vector<OniFile<TRAC::Root>> m_tracFiles;
     std::vector<OniFile<TRAM::Root>> m_tramFiles;
+
+    std::unique_ptr<filewatch::FileWatch<std::string>> m_fileWatcher; ///< File watcher for the project directory.
 
     /**
      * @brief Helper to load ONCC files from the directory.

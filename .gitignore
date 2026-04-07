@@ -8,7 +8,7 @@ out/
 .idea/
 cmake-build-debug/
 cmake-build-release/
-
+.*
 # OS specific
 .DS_Store
 Thumbs.db

@@ -2,6 +2,7 @@
 #include "component/logger/ILogger.hpp"
 #include "repository/OniRepositoryRegistry.hpp"
 #include <algorithm>
+#include <mutex>
 
 ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
                                              const IOniCatalogService&    vanilla,
@@ -16,6 +17,7 @@ ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
 // ---------------------------------------------------------------------------
 
 void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPath) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     m_logger.info("[ProjectCatalogService] Loading project files from: " + folderPath.string());
 
     m_onccFiles.clear();
@@ -27,6 +29,18 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     loadOncvFiles(folderPath);
     loadTracFiles(folderPath);
     loadTramFiles(folderPath);
+
+    // Initialize the file watcher
+    try {
+        m_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(
+            folderPath.string(),
+            [this](const std::string& path, const filewatch::Event change_type) {
+                m_logger.info("[ProjectCatalogService] File changed: " + path);
+            }
+        );
+    } catch (const std::exception& e) {
+        m_logger.error("[ProjectCatalogService] Failed to initialize file watcher: " + std::string(e.what()));
+    }
 
     m_logger.info("[ProjectCatalogService] Loaded " +
                   std::to_string(m_onccFiles.size()) + " ONCC, " +
@@ -100,6 +114,7 @@ void ProjectCatalogService::loadTramFiles(const std::filesystem::path& folderPat
 // ---------------------------------------------------------------------------
 
 void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     m_logger.info("[ProjectCatalogService] Saving modified files to: " + folderPath.string());
 
     for (auto& file: m_onccFiles) {
@@ -119,6 +134,7 @@ void ProjectCatalogService::saveToFolder(const std::filesystem::path& folderPath
 }
 
 void ProjectCatalogService::saveFile(OniFile<ONCC::Root>& file) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (m_repos.oncc.save(file)) {
         file.status = FileStatus::Unmodified;
         m_logger.info("[ProjectCatalogService] Saved ONCC: " + file.path.filename().string());
@@ -128,6 +144,7 @@ void ProjectCatalogService::saveFile(OniFile<ONCC::Root>& file) {
 }
 
 void ProjectCatalogService::saveFile(OniFile<ONCV::Root>& file) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (m_repos.oncv.save(file)) {
         file.status = FileStatus::Unmodified;
         m_logger.info("[ProjectCatalogService] Saved ONCV: " + file.path.filename().string());
@@ -137,6 +154,7 @@ void ProjectCatalogService::saveFile(OniFile<ONCV::Root>& file) {
 }
 
 void ProjectCatalogService::saveFile(OniFile<TRAC::Root>& file) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (m_repos.trac.save(file)) {
         file.status = FileStatus::Unmodified;
         m_logger.info("[ProjectCatalogService] Saved TRAC: " + file.path.filename().string());
@@ -146,6 +164,7 @@ void ProjectCatalogService::saveFile(OniFile<TRAC::Root>& file) {
 }
 
 void ProjectCatalogService::saveFile(OniFile<TRAM::Root>& file) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (m_repos.tram.save(file)) {
         file.status = FileStatus::Unmodified;
         m_logger.info("[ProjectCatalogService] Saved TRAM: " + file.path.filename().string());
@@ -158,16 +177,29 @@ void ProjectCatalogService::saveFile(OniFile<TRAM::Root>& file) {
 // Delete
 // ---------------------------------------------------------------------------
 
-void ProjectCatalogService::deleteFile(OniFile<ONCC::Root>& file) { file.status = FileStatus::Deleted; }
-void ProjectCatalogService::deleteFile(OniFile<ONCV::Root>& file) { file.status = FileStatus::Deleted; }
-void ProjectCatalogService::deleteFile(OniFile<TRAC::Root>& file) { file.status = FileStatus::Deleted; }
-void ProjectCatalogService::deleteFile(OniFile<TRAM::Root>& file) { file.status = FileStatus::Deleted; }
+void ProjectCatalogService::deleteFile(OniFile<ONCC::Root>& file) { 
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    file.status = FileStatus::Deleted; 
+}
+void ProjectCatalogService::deleteFile(OniFile<ONCV::Root>& file) { 
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    file.status = FileStatus::Deleted; 
+}
+void ProjectCatalogService::deleteFile(OniFile<TRAC::Root>& file) { 
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    file.status = FileStatus::Deleted; 
+}
+void ProjectCatalogService::deleteFile(OniFile<TRAM::Root>& file) { 
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    file.status = FileStatus::Deleted; 
+}
 
 // ---------------------------------------------------------------------------
 // Create from vanilla
 // ---------------------------------------------------------------------------
 
 bool ProjectCatalogService::createOnccFromVanilla(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     for (const auto& file: m_vanilla.getOnccFiles()) {
         if (file.name == name) {
             auto copy = file;
@@ -182,6 +214,7 @@ bool ProjectCatalogService::createOnccFromVanilla(const std::string& name) {
 }
 
 bool ProjectCatalogService::createOncvFromVanilla(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     for (const auto& file: m_vanilla.getOncvFiles()) {
         if (file.name == name) {
             auto copy = file;
@@ -196,6 +229,7 @@ bool ProjectCatalogService::createOncvFromVanilla(const std::string& name) {
 }
 
 bool ProjectCatalogService::createTracFromVanilla(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     for (const auto& file: m_vanilla.getTracFiles()) {
         if (file.name == name) {
             auto copy = file;
@@ -210,6 +244,7 @@ bool ProjectCatalogService::createTracFromVanilla(const std::string& name) {
 }
 
 bool ProjectCatalogService::createTramFromVanilla(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     for (const auto& file: m_vanilla.getTramFiles()) {
         if (file.name == name) {
             auto copy = file;

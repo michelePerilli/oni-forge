@@ -11,8 +11,8 @@
 /**
  * @brief Common interface for all catalog services.
  *
- * Provides read-only access to loaded Oni file collections.
- * Implemented by VanillaCatalogService, ModCatalogService and ProjectCatalogService.
+ * Provides access to loaded Oni file collections.
+ * Implemented by VanillaCatalogService and ProjectCatalogService.
  */
 class IOniCatalogService {
 public:
