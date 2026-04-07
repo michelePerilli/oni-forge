@@ -31,13 +31,19 @@ FetchContent_Declare(
         GIT_TAG        VER-2-14-2
 )
 
+FetchContent_Declare(
+        filewatch
+        GIT_REPOSITORY https://github.com/ThomasMonkman/filewatch.git
+        GIT_TAG        master
+)
+
 set(FT_DISABLE_ZLIB      ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_BZIP2     ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_PNG       ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_HARFBUZZ  ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_BROTLI    ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(pugixml SDL2 imgui freetype)
+FetchContent_MakeAvailable(pugixml SDL2 imgui freetype filewatch)
 
 # --- ImGui static library ---
 add_library(imgui_lib STATIC
@@ -102,6 +108,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/assets
+)
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
+        ${filewatch_SOURCE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
