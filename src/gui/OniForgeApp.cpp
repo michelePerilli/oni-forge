@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include "gui/OniUI.hpp"
 // ---------------------------------------------------------------------------
-// Constructor
+// Constructor / Destructor
 // ---------------------------------------------------------------------------
 
 OniForgeApp::OniForgeApp()
@@ -24,6 +24,12 @@ OniForgeApp::OniForgeApp()
       , m_addFileModal(m_vanilla, m_project, m_logger)
       , m_settingsModal(m_config, m_renderer) {
     loadConfig();
+}
+
+OniForgeApp::~OniForgeApp() {
+    if (m_oniSplitThread.joinable()) {
+        m_oniSplitThread.join();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,22 +206,39 @@ void OniForgeApp::renderMenuBar() {
     }
 
     if (ImGui::BeginMenu("Project")) {
-        if (ImGui::MenuItem("Try in ONI")) {
-            m_tryInOniLog.clear();
+        if (ImGui::MenuItem("Try in ONI", nullptr, false, !m_tryInOniRunning)) {
+            if (m_oniSplitThread.joinable()) {
+                m_oniSplitThread.join();
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(m_oniSplitLogMutex);
+                m_tryInOniLog.clear();
+            }
+            
             m_tryInOniRunning   = true;
             m_tryInOniSuccess   = false;
             m_showTryInOniModal = true;
 
-            m_project.saveToFolder(m_config.projectPath);
-            m_tryInOniLog.emplace_back("[OniForge] Project saved.");
+            m_oniSplitThread = std::thread([this]() {
+                m_project.saveToFolder(m_config.projectPath);
+                
+                {
+                    std::lock_guard<std::mutex> lock(m_oniSplitLogMutex);
+                    m_tryInOniLog.emplace_back("[OniForge] Project saved.");
+                }
 
-            m_tryInOniSuccess = m_oniSplit.tryInOni(
-                m_config.projectPath,
-                m_config.tempOniPath,
-                false,
-                [this](const std::string& line) { m_tryInOniLog.push_back(line); }
-            );
-            m_tryInOniRunning = false;
+                m_tryInOniSuccess = m_oniSplit.tryInOni(
+                    m_config.projectPath,
+                    m_config.tempOniPath,
+                    false,
+                    [this](const std::string& line) {
+                        std::lock_guard<std::mutex> lock(m_oniSplitLogMutex);
+                        m_tryInOniLog.push_back(line);
+                    }
+                );
+                m_tryInOniRunning = false;
+            });
         }
         ImGui::EndMenu();
     }
@@ -253,8 +276,11 @@ void OniForgeApp::renderTryInOniModal() {
     ImGui::Spacing();
 
     ImGui::BeginChild("##log", {0, 350}, true, ImGuiWindowFlags_HorizontalScrollbar);
-    for (const auto& line: m_tryInOniLog)
-        ImGui::TextUnformatted(line.c_str());
+    {
+        std::lock_guard<std::mutex> lock(m_oniSplitLogMutex);
+        for (const auto& line: m_tryInOniLog)
+            ImGui::TextUnformatted(line.c_str());
+    }
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
         ImGui::SetScrollHereY(1.0f);
     ImGui::EndChild();

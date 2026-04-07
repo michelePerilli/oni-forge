@@ -22,6 +22,9 @@
 
 #include <string>
 #include <vector>
+#include <thread>
+#include <atomic>
+#include <mutex>
 
 /**
  * @brief Main application class for OniForge.
@@ -34,7 +37,7 @@
 class OniForgeApp {
 public:
     OniForgeApp();
-    ~OniForgeApp() = default;
+    ~OniForgeApp();
 
     OniForgeApp(const OniForgeApp&) = delete;
     OniForgeApp& operator=(const OniForgeApp&) = delete;
@@ -91,9 +94,11 @@ private:
 
     // --- Try in ONI modal state ---
     bool                     m_showTryInOniModal = false;
-    bool                     m_tryInOniRunning   = false;
-    bool                     m_tryInOniSuccess   = false;
+    std::atomic<bool>        m_tryInOniRunning   = false;
+    std::atomic<bool>        m_tryInOniSuccess   = false;
     std::vector<std::string> m_tryInOniLog;
+    std::mutex               m_oniSplitLogMutex;
+    std::thread              m_oniSplitThread;
 
     // --- Lifecycle ---
     
