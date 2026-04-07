@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 
 #include "model/ONCC.hpp"
 #include "model/ONCV.hpp"
@@ -41,4 +42,10 @@ public:
      * @return Const reference to the collection of TRAM files.
      */
     [[nodiscard]] virtual const std::vector<OniFile<TRAM::Root>>& getTramFiles() const = 0;
+
+    /**
+     * @brief Gets the mutex for thread-safe access to catalog collections.
+     * @return Reference to the recursive mutex.
+     */
+    [[nodiscard]] virtual std::recursive_mutex& getMutex() const = 0;
 };

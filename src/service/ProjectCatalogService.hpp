@@ -2,16 +2,15 @@
 
 #include <filesystem>
 #include <vector>
-#include <mutex> // Required for std::recursive_mutex
-#include <memory> // Required for std::unique_ptr
+#include <mutex>
+#include <memory>
 
 #include "service/IOniCatalogService.hpp"
+#include "FileWatch.hpp"
 
 // Forward declarations
 struct OniRepositoryRegistry;
 class ILogger;
-
-#include "FileWatch.hpp"
 
 /**
  * @brief Editable catalog representing the current mod project.
@@ -19,10 +18,14 @@ class ILogger;
  * This service manages the loading, saving, and modification of mod files within a specific project folder.
  * It also facilitates the creation of new mod files by copying data from the read-only vanilla catalog.
  *
+ * This class is thread-safe and integrates a file watcher that runs on a background thread.
+ * When accessing file vectors from the render loop, you MUST lock the mutex provided by getMutex().
+ *
  * Responsibilities:
  * - Loading project-specific ONCC, ONCV, TRAC, and TRAM files.
  * - Saving modifications back to the project folder.
  * - Cloning vanilla assets into the project for editing.
+ * - Monitoring the project folder for file changes in real-time.
  */
 class ProjectCatalogService final : public IOniCatalogService {
 public:
@@ -38,9 +41,10 @@ public:
                           const ILogger&               logger);
 
     /**
-     * @brief Loads all supported mod files from the specified project directory.
+     * @brief Loads all supported mod files from the specified project directory and starts the file watcher.
      *
      * Scans the directory for ONCC, ONCV, TRAC, and TRAM files and populates the internal collections.
+     * Any existing file watcher is replaced with a new one for the specified path.
      *
      * @param folderPath The root path of the mod project.
      */
@@ -51,6 +55,7 @@ public:
      *
      * Iterates through all internal file collections and serializes them to XML in the target folder.
      * Only files with a status other than Unmodified or Deleted are saved.
+     * This operation is thread-safe.
      *
      * @param folderPath The destination path for saving files.
      */
@@ -82,6 +87,7 @@ public:
 
     /**
      * @brief Marks a file for deletion by setting its status to Deleted.
+     * These operations are thread-safe.
      * @param file Reference to the file to mark.
      */
     void deleteFile(OniFile<ONCC::Root>& file);
@@ -93,7 +99,7 @@ public:
      * @brief Creates an editable copy of a vanilla ONCC file in the project.
      *
      * Looks up the file in the vanilla catalog by name. If found, a deep copy is added to the project's
-     * collection with the 'Created' status.
+     * collection with the 'Created' status. Thread-safe.
      *
      * @param name The filename stem (e.g., "ONCCbarabus") to search for in the vanilla catalog.
      * @return true If the file was found in vanilla and successfully added to the project.
@@ -106,7 +112,6 @@ public:
      *
      * @param name The filename stem to look up in the vanilla catalog.
      * @return true If the file was found in vanilla and successfully added to the project.
-     * @return false If the file was not found.
      */
     [[nodiscard]] bool createOncvFromVanilla(const std::string& name);
 
@@ -115,7 +120,6 @@ public:
      *
      * @param name The filename stem to look up in the vanilla catalog.
      * @return true If the file was found in vanilla and successfully added to the project.
-     * @return false If the file was not found.
      */
     [[nodiscard]] bool createTracFromVanilla(const std::string& name);
 
@@ -124,30 +128,33 @@ public:
      *
      * @param name The filename stem to look up in the vanilla catalog.
      * @return true If the file was found in vanilla and successfully added to the project.
-     * @return false If the file was not found.
      */
     [[nodiscard]] bool createTramFromVanilla(const std::string& name);
 
     /**
      * @brief Retrieves the collection of loaded ONCC (Character Class) files.
+     * @note MUST be accessed while holding the mutex from getMutex().
      * @return A constant reference to the vector of ONCC files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<ONCC::Root>>& getOnccFiles() const override;
 
     /**
      * @brief Retrieves the collection of loaded ONCV (Character Variant) files.
+     * @note MUST be accessed while holding the mutex from getMutex().
      * @return A constant reference to the vector of ONCV files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<ONCV::Root>>& getOncvFiles() const override;
 
     /**
      * @brief Retrieves the collection of loaded TRAC (Animation Collection) files.
+     * @note MUST be accessed while holding the mutex from getMutex().
      * @return A constant reference to the vector of TRAC files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<TRAC::Root>>& getTracFiles() const override;
 
     /**
      * @brief Retrieves the collection of loaded TRAM (Animation Metadata) files.
+     * @note MUST be accessed while holding the mutex from getMutex().
      * @return A constant reference to the vector of TRAM files in the project.
      */
     [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
@@ -156,7 +163,7 @@ public:
      * @brief Gets the mutex for thread-safe access to catalog collections.
      * @return Reference to the recursive mutex.
      */
-    std::recursive_mutex& getMutex() const { return m_mutex; }
+    [[nodiscard]] std::recursive_mutex& getMutex() const override { return m_mutex; }
 
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry containing repositories for file I/O.
@@ -170,7 +177,7 @@ private:
     std::vector<OniFile<TRAC::Root>> m_tracFiles;
     std::vector<OniFile<TRAM::Root>> m_tramFiles;
 
-    std::unique_ptr<filewatch::FileWatch<std::string>> m_fileWatcher; ///< File watcher for the project directory.
+    std::unique_ptr<filewatch::FileWatch<std::string>> m_fileWatcher; ///< Background file watcher.
 
     /**
      * @brief Helper to load ONCC files from the directory.
@@ -198,6 +205,7 @@ private:
 
     /**
      * @brief Handles file system events (add, modify, remove) for a specific file type.
+     * Called from the background file watcher thread.
      * 
      * @tparam T The data type (ONCC::Root, etc.)
      * @tparam Repo The repository type.

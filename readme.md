@@ -27,6 +27,7 @@ OniForge primarily interacts with the following file types:
 *   **Dependencies:**
     *   pugixml (XML parsing)
     *   FreeType (Font rendering)
+    *   filewatch (Cross-platform file system monitoring)
 
 ## Project Structure
 
@@ -61,9 +62,12 @@ OniForge follows a strictly layered architecture with **Dependency Injection**:
 
 All dependencies are injected via constructors in the `OniForgeApp` composition root.
 
-### Data Management: `OniFile<T>`
+### Data Management & Concurrency
 
-To manage game assets, OniForge uses a generic container called `OniFile<T>`. It pairs a data model (like `ONCC` or `TRAM`) with its `std::filesystem::path`. The path serves as the "source of truth" and primary key throughout the application, ensuring that UI views and services remain synchronized with the physical files on disk.
+To manage game assets, OniForge uses a generic container called `OniFile<T>`. It pairs a data model (like `ONCC` or `TRAM`) with its `std::filesystem::path`.
+
+**Thread Safety & Background Watcher:**
+The `ProjectCatalogService` employs a background thread using `filewatch` to monitor the project directory. Any changes on disk (adds, modifications, removals) are automatically reflected in the application's memory. To ensure thread safety between the background watcher and the UI render loop, all catalog access is synchronized via a `std::recursive_mutex`.
 
 ### Logging Specification
 
@@ -77,6 +81,7 @@ Logging is decoupled via the `ILogger` interface. Components must inject this in
 ## Features
 
 *   **Configuration:** Runtime settings for OniSplit paths, game data, and UI theme (saved in `oniforge.config.xml`).
+*   **Live Sync:** A background file watcher keeps the project catalog in sync with manual disk changes.
 *   **Editors:**
     *   **ONCC:** Character Class editing (General stats).
     *   **ONCV:** Character Variant linking.
@@ -88,7 +93,8 @@ Logging is decoupled via the `ILogger` interface. Components must inject this in
 ## Roadmap & Pending Items
 
 *   [x] **Configuration Screen:** Runtime settings for paths and preferences.
-*   [ ] **Background Processing:** Move the OniSplit pipeline to a background thread to prevent UI freezing.
+*   [x] **File System Watcher:** Real-time synchronization of the project catalog with disk changes.
+*   [ ] **Background Processing:** Move the heavy OniSplit pipeline tasks to a background thread to prevent UI freezing.
 *   [ ] **Expanded Editors:** Add support for remaining ONCC tabs (AI, Sounds, Physics).
 *   [ ] **UI Improvements:** Convert flag text inputs to checkbox groups.
 *   [ ] **New File Types:** Support for TRMA and other formats.

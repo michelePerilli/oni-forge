@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <vector>
+#include <mutex>
 
 #include "service/IOniCatalogService.hpp"
 
@@ -60,9 +61,17 @@ public:
      */
     [[nodiscard]] const std::vector<OniFile<TRAM::Root>>& getTramFiles() const override;
 
+    /**
+     * @brief Gets the mutex for thread-safe access to catalog collections.
+     * @return Reference to the recursive mutex.
+     */
+    [[nodiscard]] std::recursive_mutex& getMutex() const override { return m_mutex; }
+
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry of repositories for file operations.
     const ILogger&               m_logger;  ///< Logger instance.
+
+    mutable std::recursive_mutex m_mutex; ///< Mutex to protect access to file vectors.
 
     std::vector<OniFile<ONCC::Root>> m_onccFiles;
     std::vector<OniFile<ONCV::Root>> m_oncvFiles;
