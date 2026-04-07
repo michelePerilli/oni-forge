@@ -34,8 +34,29 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
     try {
         m_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(
             folderPath.string(),
-            [this](const std::string& path, const filewatch::Event change_type) {
-                m_logger.info("[ProjectCatalogService] File changed: " + path);
+            [this, folderPath](const std::string& relativePath, const filewatch::Event change_type) {
+                std::filesystem::path fullPath = folderPath / relativePath;
+                
+                // 1. Filter for .xml extension
+                if (fullPath.extension() != OniForge::xmlExtension) {
+                    return;
+                }
+
+                m_logger.info("[ProjectCatalogService] File watcher event: " + relativePath);
+
+                std::lock_guard<std::recursive_mutex> lock(m_mutex);
+                std::string stem = fullPath.stem().string();
+
+                // 2. Determine file type via prefix
+                if (stem.starts_with(OniForge::ONCCPrefix)) {
+                    handleFileEvent(m_onccFiles, m_repos.oncc, fullPath, change_type);
+                } else if (stem.starts_with(OniForge::ONCVPrefix)) {
+                    handleFileEvent(m_oncvFiles, m_repos.oncv, fullPath, change_type);
+                } else if (stem.starts_with(OniForge::TRACPrefix)) {
+                    handleFileEvent(m_tracFiles, m_repos.trac, fullPath, change_type);
+                } else if (stem.starts_with(OniForge::TRAMPrefix)) {
+                    handleFileEvent(m_tramFiles, m_repos.tram, fullPath, change_type);
+                }
             }
         );
     } catch (const std::exception& e) {
@@ -47,6 +68,39 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
                   std::to_string(m_oncvFiles.size()) + " ONCV, " +
                   std::to_string(m_tramFiles.size()) + " TRAM, " +
                   std::to_string(m_tracFiles.size()) + " TRAC files.");
+}
+
+template<typename T, typename Repo>
+void ProjectCatalogService::handleFileEvent(std::vector<OniFile<T>>& files, const Repo& repo, const std::filesystem::path& path, filewatch::Event event) {
+    auto it = std::find_if(files.begin(), files.end(), [&](const auto& f) { return f.path == path; });
+
+    if (event == filewatch::Event::added || event == filewatch::Event::modified) {
+        auto result = repo.load(path.string());
+        if (!result) {
+            m_logger.warning("[ProjectCatalogService] Failed to reload file: " + path.string());
+            return;
+        }
+
+        if (it != files.end()) {
+            // Update existing
+            it->data = std::move(result->data);
+            it->status = FileStatus::Unmodified;
+            m_logger.info("[ProjectCatalogService] Reloaded: " + path.filename().string());
+        } else {
+            // Add new
+            auto& file = files.emplace_back(std::move(*result));
+            file.status = FileStatus::Unmodified;
+            m_logger.info("[ProjectCatalogService] Added: " + path.filename().string());
+        }
+    } else if (event == filewatch::Event::removed) {
+        if (it != files.end()) {
+            // Mark as deleted or remove from vector. 
+            // According to task: "Marks the file status as Deleted or removes it from the vector."
+            // We choose to remove it to reflect the disk state accurately.
+            files.erase(it);
+            m_logger.info("[ProjectCatalogService] Removed from project: " + path.filename().string());
+        }
+    }
 }
 
 void ProjectCatalogService::loadOnccFiles(const std::filesystem::path& folderPath) {

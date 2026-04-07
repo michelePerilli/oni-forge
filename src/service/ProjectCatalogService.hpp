@@ -195,4 +195,17 @@ private:
      * @param folderPath The directory to scan.
      */
     void loadTramFiles(const std::filesystem::path& folderPath);
+
+    /**
+     * @brief Handles file system events (add, modify, remove) for a specific file type.
+     * 
+     * @tparam T The data type (ONCC::Root, etc.)
+     * @tparam Repo The repository type.
+     * @param files The vector of files to update.
+     * @param repo The repository to use for loading.
+     * @param path The absolute path to the file.
+     * @param event The type of file system event.
+     */
+    template<typename T, typename Repo>
+    void handleFileEvent(std::vector<OniFile<T>>& files, const Repo& repo, const std::filesystem::path& path, filewatch::Event event);
 };
