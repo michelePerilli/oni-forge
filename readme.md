@@ -69,6 +69,9 @@ To manage game assets, OniForge uses a generic container called `OniFile<T>`. It
 **Thread Safety & Background Watcher:**
 The `ProjectCatalogService` employs a background thread using `filewatch` to monitor the project directory. Any changes on disk (adds, modifications, removals) are automatically reflected in the application's memory. To ensure thread safety between the background watcher and the UI render loop, all catalog access is synchronized via a `std::recursive_mutex`.
 
+**OniSplit Pipeline:**
+The pipeline for converting assets and launching the game runs in a dedicated background thread. Status updates are handled atomically, and log outputs are protected by a mutex, ensuring the UI remains responsive during long-running tasks.
+
 ### Logging Specification
 
 Logging is decoupled via the `ILogger` interface. Components must inject this interface and use the following level-specific methods:
@@ -87,14 +90,15 @@ Logging is decoupled via the `ILogger` interface. Components must inject this in
     *   **ONCV:** Character Variant linking.
     *   **TRAC:** Animation Collection management.
     *   **TRAM:** Detailed Animation editing (flags, velocities, events).
-*   **Pipeline:** "Try in Oni" feature automates the OniSplit export/import commands, effectively compiling your mod and launching the game in one click.
+*   **Advanced OniSplit Pipeline:** "Try in Oni" feature automates a multi-pass process for mod packaging and deployment. This includes support for converting DAE models to TRBS format and handling Blender-specific animation workflows.
 *   **Management:** Separate views for Vanilla (read-only) and Project (editable) files.
 
 ## Roadmap & Pending Items
 
 *   [x] **Configuration Screen:** Runtime settings for paths and preferences.
 *   [x] **File System Watcher:** Real-time synchronization of the project catalog with disk changes.
-*   [ ] **Background Processing:** Move the heavy OniSplit pipeline tasks to a background thread to prevent UI freezing.
+*   [x] **Background Processing:** OniSplit pipeline tasks now run in a background thread to prevent UI freezing.
+*   [x] **Advanced OniSplit Workflows:** Multi-pass pipeline for DAE models and Blender animations.
 *   [ ] **Expanded Editors:** Add support for remaining ONCC tabs (AI, Sounds, Physics).
 *   [ ] **UI Improvements:** Convert flag text inputs to checkbox groups.
 *   [ ] **New File Types:** Support for TRMA and other formats.

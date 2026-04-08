@@ -3,18 +3,19 @@
 #include <array>
 #include <cstdio>
 #include <filesystem>
-#include <stdexcept>
 
 #ifdef _WIN32
-  #include <windows.h>
+#include <windows.h>
 #else
   #include <unistd.h>
   #include <sys/types.h>
 #endif
+
 OniSplitService::OniSplitService(const std::string& oniSplitPath,
                                  const std::string& oniGamePath)
     : m_oniSplitPath(oniSplitPath)
-    , m_oniGamePath(oniGamePath) {}
+      , m_oniGamePath(oniGamePath) {
+}
 
 // ---------------------------------------------------------------------------
 // Public
@@ -22,39 +23,83 @@ OniSplitService::OniSplitService(const std::string& oniSplitPath,
 
 bool OniSplitService::tryInOni(const std::filesystem::path& projectXmlPath,
                                const std::filesystem::path& tempOniPath,
-                               bool                         useSep,
+                               const bool                   useSep,
                                const OutputCallback&        onOutput) const {
-    // Ensure temp folder exists
     std::error_code ec;
+
+    // Step 0: Cleanup
+    onOutput("[OniSplit] Cleaning temp folder: " + tempOniPath.string());
+    if (std::filesystem::exists(tempOniPath)) {
+        std::filesystem::remove_all(tempOniPath, ec);
+        if (ec) {
+            onOutput("[OniSplit] Failed to clean temp folder: " + ec.message());
+            return false;
+        }
+    }
     std::filesystem::create_directories(tempOniPath, ec);
     if (ec) {
         onOutput("[OniSplit] Failed to create temp folder: " + ec.message());
         return false;
     }
 
+    // Pass 1: Models
+    onOutput("[OniSplit] Pass 1/5 - Models (DAE -> TRBS)...");
+    if (const auto modelPath = projectXmlPath / "model"; std::filesystem::exists(modelPath)) {
+        if (!trbsDaeToOni(modelPath, tempOniPath, onOutput, true)) return false;
+    } else {
+        onOutput("[OniSplit] Skipping Pass 1: 'model' folder not found.");
+    }
+
+    // Pass 2: Core XMLs
+    onOutput("[OniSplit] Pass 2/5 - Core XMLs...");
+    if (!xmlToOni(projectXmlPath, tempOniPath, onOutput)) return false;
+
+    // Pass 3: Images
+    onOutput("[OniSplit] Pass 3/5 - Images...");
+    if (const auto imagesPath = projectXmlPath / "images"; std::filesystem::exists(imagesPath)) {
+        if (!imageXmlToOni(imagesPath, tempOniPath, onOutput)) return false;
+    } else {
+        onOutput("[OniSplit] Skipping Pass 3: 'images' folder not found.");
+    }
+
+    // Pass 4: Animations
+    onOutput("[OniSplit] Pass 4/5 - Animations...");
+    if (const auto animsPath = projectXmlPath / "animations" / "noblender";
+        std::filesystem::exists(animsPath)) {
+        onOutput("[OniSplit] Processing standard animations...");
+        if (!animationXmlToOni(animsPath, tempOniPath, onOutput, false)) return false;
+    }
+    if (const auto animsPath = projectXmlPath / "animations" / "blender"; std::filesystem::exists(animsPath)) {
+        onOutput("[OniSplit] Processing Blender animations...");
+        if (!animationXmlToOni(animsPath, tempOniPath, onOutput, true)) return false;
+    }
+
+    // Pass 5: Particles
+    onOutput("[OniSplit] Pass 5/5 - Particles...");
+    if (const auto particlesPath = projectXmlPath / "particles"; std::filesystem::exists(particlesPath)) {
+        if (!xmlToOni(particlesPath, tempOniPath, onOutput)) return false;
+    } else {
+        onOutput("[OniSplit] Skipping Pass 5: 'particles' folder not found.");
+    }
+
+    // Finalize
     const auto datPath = tempOniPath / DAT_NAME;
 
-    onOutput("[OniSplit] Step 1/4 — Converting XML to ONI...");
-    if (!convertXmlToOni(projectXmlPath, tempOniPath, onOutput)) {
-        onOutput("[OniSplit] FAILED at step 1.");
+    onOutput("[OniSplit] Step: Packaging DAT...");
+    if (!createDat(tempOniPath, datPath, useSep, onOutput)) {
+        onOutput("[OniSplit] FAILED at packaging.");
         return false;
     }
 
-    onOutput("[OniSplit] Step 2/4 — Packaging DAT...");
-    if (!packageDat(tempOniPath, datPath, useSep, onOutput)) {
-        onOutput("[OniSplit] FAILED at step 2.");
-        return false;
-    }
-
-    onOutput("[OniSplit] Step 3/4 — Copying DAT to Oni...");
+    onOutput("[OniSplit] Step: Copying DAT to Oni...");
     if (!copyDat(datPath, onOutput)) {
-        onOutput("[OniSplit] FAILED at step 3.");
+        onOutput("[OniSplit] FAILED at copying.");
         return false;
     }
 
-    onOutput("[OniSplit] Step 4/4 — Launching Oni...");
+    onOutput("[OniSplit] Step: Launching Oni...");
     if (!launchOni(onOutput)) {
-        onOutput("[OniSplit] FAILED at step 4.");
+        onOutput("[OniSplit] FAILED at launching.");
         return false;
     }
 
@@ -66,31 +111,63 @@ bool OniSplitService::tryInOni(const std::filesystem::path& projectXmlPath,
 // Private steps
 // ---------------------------------------------------------------------------
 
-bool OniSplitService::convertXmlToOni(const std::filesystem::path& xmlPath,
-                                      const std::filesystem::path& oniPath,
-                                      const OutputCallback&        onOutput) const {
-    const std::string cmd =
-        "\"" + m_oniSplitPath.string() + "\" -create"
-        " \"" + oniPath.string() + "\""
-        " \"" + xmlPath.string() + "\\*\"";
+
+bool OniSplitService::createOni(const std::filesystem::path& inputPath,
+                                const std::filesystem::path& outputPath,
+                                const std::string&           flags,
+                                const std::string&           wildcard,
+                                const OutputCallback&        callback) const {
+    const std::string cmd = " \"" + m_oniSplitPath.string() + "\" " + flags +
+                            " \"" + outputPath.string() + "\" "
+                            " \"" + (inputPath / wildcard).string() + "\"";
+    return runProcess(cmd, callback);
+}
+
+bool OniSplitService::createDat(const std::filesystem::path& oniPath,
+                                const std::filesystem::path& datPath,
+                                bool                         useSep,
+                                const OutputCallback&        onOutput) const {
+    const std::string importFlag = useSep ? "-import:sep" : "-import:nosep";
+    const std::string cmd        =
+            "\"" + m_oniSplitPath.string() + "\" " + importFlag +
+            " \"" + oniPath.string() + "\""
+            " \"" + datPath.string() + "\"";
     return runProcess(cmd, onOutput);
 }
 
-bool OniSplitService::packageDat(const std::filesystem::path& oniPath,
-                                 const std::filesystem::path& datPath,
-                                 bool                         useSep,
-                                 const OutputCallback&        onOutput) const {
-    const std::string importFlag = useSep ? "-import:sep" : "-import:nosep";
-    const std::string cmd =
-        "\"" + m_oniSplitPath.string() + "\" " + importFlag +
-        " \"" + oniPath.string() + "\""
-        " \"" + datPath.string() + "\"";
-    return runProcess(cmd, onOutput);
+
+bool OniSplitService::xmlToOni(const std::filesystem::path& inputPath,
+                               const std::filesystem::path& outputPath,
+                               const OutputCallback&        callback) const {
+    return createOni(inputPath, outputPath, "-create", "*.xml", callback);
 }
+
+bool OniSplitService::imageXmlToOni(const std::filesystem::path& inputPath,
+                                    const std::filesystem::path& outputPath,
+                                    const OutputCallback&        callback) const {
+    return createOni(inputPath, outputPath, "-create", "*.xml", callback);
+}
+
+bool OniSplitService::animationXmlToOni(const std::filesystem::path& inputPath,
+                                        const std::filesystem::path& outputPath,
+                                        const OutputCallback&        callback,
+                                        const bool                   useBlender) const {
+    const std::string flags = std::string("-create") + (useBlender ? " -blender" : "");
+    return createOni(inputPath, outputPath, flags, "*.xml", callback);
+}
+
+bool OniSplitService::trbsDaeToOni(const std::filesystem::path& inputPath,
+                                   const std::filesystem::path& outputPath,
+                                   const OutputCallback&        callback,
+                                   const bool                   useBlender) const {
+    const std::string flags = std::string("-create:trbs") + (useBlender ? " -blender" : "");
+    return createOni(inputPath, outputPath, flags, "*.dae", callback);
+}
+
 
 bool OniSplitService::copyDat(const std::filesystem::path& datPath,
                               const OutputCallback&        onOutput) const {
-    const auto dest = m_oniGamePath / GAME_DATA_FOLDER / DAT_NAME;
+    const auto      dest = m_oniGamePath / GAME_DATA_FOLDER / DAT_NAME;
     std::error_code ec;
     if (std::filesystem::exists(dest)) {
         std::filesystem::remove(dest, ec);
