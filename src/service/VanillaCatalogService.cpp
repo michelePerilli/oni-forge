@@ -2,13 +2,13 @@
 
 #include <bits/ranges_algo.h>
 
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "repository/OniRepositoryRegistry.hpp"
 
 /**
  * @brief Constructs the vanilla catalog service.
  */
-VanillaCatalogService::VanillaCatalogService(const OniRepositoryRegistry& repos, const ILogger& logger)
+VanillaCatalogService::VanillaCatalogService(const OniRepositoryRegistry& repos, const Logger& logger)
     : m_repos(repos)
       , m_logger(logger) {
 }

@@ -10,7 +10,7 @@
 // Forward declarations
 class XmlReader;
 class XmlWriter;
-class ILogger;
+class Logger;
 
 /**
  * @brief Repository for managing Character Class (ONCC) data persistence.
@@ -22,7 +22,7 @@ class ILogger;
  * It utilizes:
  * - XmlReader: To read raw XML files.
  * - XmlWriter: To write data back to XML format.
- * - ILogger: For logging errors and operations.
+ * - Logger: For logging errors and operations.
  */
 class ONCCRepository {
 public:
@@ -33,7 +33,7 @@ public:
      * @param writer Reference to the XML writing service.
      * @param logger Reference to the logging service.
      */
-    ONCCRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger);
+    ONCCRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger);
 
     /**
      * @brief Loads an ONCC file from the specified path.
@@ -62,7 +62,7 @@ public:
 private:
     const XmlReader& m_reader; ///< Service for reading XML files.
     const XmlWriter& m_writer; ///< Service for writing XML files.
-    const ILogger&   m_logger; ///< Logger for error reporting.
+    const Logger&   m_logger; ///< Logger for error reporting.
 
     /**
      * @brief Parses an XML document into an ONCC::Root structure.

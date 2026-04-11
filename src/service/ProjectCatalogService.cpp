@@ -1,12 +1,12 @@
 #include "service/ProjectCatalogService.hpp"
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "repository/OniRepositoryRegistry.hpp"
 #include <algorithm>
 #include <mutex>
 
 ProjectCatalogService::ProjectCatalogService(const OniRepositoryRegistry& repos,
                                              const IOniCatalogService&    vanilla,
-                                             const ILogger&               logger)
+                                             const Logger&               logger)
     : m_repos(repos)
       , m_vanilla(vanilla)
       , m_logger(logger) {
@@ -42,7 +42,7 @@ void ProjectCatalogService::loadFromFolder(const std::filesystem::path& folderPa
                     return;
                 }
 
-                m_logger.info("[ProjectCatalogService] File watcher event: " + relativePath);
+                m_logger.debug("[ProjectCatalogService] File watcher event: " + relativePath);
 
                 std::lock_guard<std::recursive_mutex> lock(m_mutex);
                 std::string stem = fullPath.stem().string();
@@ -85,12 +85,12 @@ void ProjectCatalogService::handleFileEvent(std::vector<OniFile<T>>& files, cons
             // Update existing
             it->data = std::move(result->data);
             it->status = FileStatus::Unmodified;
-            m_logger.info("[ProjectCatalogService] Reloaded: " + path.filename().string());
+            m_logger.debug("[ProjectCatalogService] Reloaded: " + path.filename().string());
         } else {
             // Add new
             auto& file = files.emplace_back(std::move(*result));
             file.status = FileStatus::Unmodified;
-            m_logger.info("[ProjectCatalogService] Added: " + path.filename().string());
+            m_logger.debug("[ProjectCatalogService] Added: " + path.filename().string());
         }
     } else if (event == filewatch::Event::removed) {
         if (it != files.end()) {
@@ -98,7 +98,7 @@ void ProjectCatalogService::handleFileEvent(std::vector<OniFile<T>>& files, cons
             // According to task: "Marks the file status as Deleted or removes it from the vector."
             // We choose to remove it to reflect the disk state accurately.
             files.erase(it);
-            m_logger.info("[ProjectCatalogService] Removed from project: " + path.filename().string());
+            m_logger.debug("[ProjectCatalogService] Removed from project: " + path.filename().string());
         }
     }
 }

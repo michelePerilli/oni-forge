@@ -4,7 +4,7 @@
 
 AddFileModal::AddFileModal(const VanillaCatalogService& vanilla,
                            ProjectCatalogService&       project,
-                           const ILogger&               logger)
+                           const Logger&               logger)
     : m_vanilla(vanilla)
       , m_project(project)
       , m_logger(logger) {

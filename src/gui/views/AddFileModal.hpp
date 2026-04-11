@@ -2,7 +2,7 @@
 
 #include "service/VanillaCatalogService.hpp"
 #include "service/ProjectCatalogService.hpp"
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 
 #include <string>
 #include <unordered_set>
@@ -21,11 +21,11 @@ public:
      *
      * @param vanilla Reference to the VanillaCatalogService for listing base game assets.
      * @param project Reference to the ProjectCatalogService for adding files to the project.
-     * @param logger Reference to the ILogger for logging operations.
+     * @param logger Reference to the Logger for logging operations.
      */
     explicit AddFileModal(const VanillaCatalogService& vanilla,
                           ProjectCatalogService&       project,
-                          const ILogger&               logger);
+                          const Logger&               logger);
 
     /**
      * @brief Renders the modal window if it is currently open.
@@ -56,7 +56,7 @@ public:
 private:
     const VanillaCatalogService& m_vanilla; ///< Service for accessing vanilla game data.
     ProjectCatalogService&       m_project; ///< Service for managing project files.
-    const ILogger&               m_logger;  ///< Logger instance.
+    const Logger&               m_logger;  ///< Logger instance.
 
     bool                            m_open          = false; ///< Current open state of the modal.
     bool                            m_justConfirmed = false; ///< Flag indicating if an action was confirmed this frame.

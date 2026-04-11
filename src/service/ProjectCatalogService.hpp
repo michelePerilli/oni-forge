@@ -10,7 +10,7 @@
 
 // Forward declarations
 struct OniRepositoryRegistry;
-class ILogger;
+class Logger;
 
 /**
  * @brief Editable catalog representing the current mod project.
@@ -38,7 +38,7 @@ public:
      */
     ProjectCatalogService(const OniRepositoryRegistry& repos,
                           const IOniCatalogService&    vanilla,
-                          const ILogger&               logger);
+                          const Logger&               logger);
 
     /**
      * @brief Loads all supported mod files from the specified project directory and starts the file watcher.
@@ -168,7 +168,7 @@ public:
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry containing repositories for file I/O.
     const IOniCatalogService&    m_vanilla; ///< Reference to the base game data service.
-    const ILogger&               m_logger;  ///< Logger for error reporting and info messages.
+    const Logger&               m_logger;  ///< Logger for error reporting and info messages.
 
     mutable std::recursive_mutex m_mutex; ///< Mutex to protect access to file vectors.
 

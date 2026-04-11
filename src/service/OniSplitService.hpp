@@ -61,9 +61,9 @@ private:
     std::filesystem::path m_oniSplitPath; ///< Path to onisplit.exe.
     std::filesystem::path m_oniGamePath;  ///< Path to Oni installation folder.
 
-    static constexpr std::string_view DAT_NAME         = "level0_alpha.dat"; ///< Target filename for the level package.
-    static constexpr std::string_view GAME_DATA_FOLDER = "GameDataFolder";   ///< Subfolder in Oni where levels are stored.
-    static constexpr std::string_view ONI_EXE          = "Oni.exe";          ///< Name of the Oni game executable.
+    static constexpr std::string_view DAT_NAME         = "level0_alpha.dat";
+    static constexpr std::string_view GAME_DATA_FOLDER = "GameDataFolder";
+    static constexpr std::string_view ONI_EXE          = "Oni.exe";
 
     /**
      * @brief Executes a shell command and streams its output.
@@ -85,6 +85,7 @@ private:
      */
     [[nodiscard]] bool createOni(const std::filesystem::path& inputPath,
                                  const std::filesystem::path& outputPath,
+                                 const std::string&           operation,
                                  const std::string&           flags,
                                  const std::string&           wildcard,
                                  const OutputCallback&        callback) const;
@@ -150,15 +151,6 @@ private:
                                  const std::filesystem::path& datPath,
                                  bool                         useSep,
                                  const OutputCallback&        onOutput) const;
-
-    /**
-     * @brief Copies the generated .dat file to the Oni game's GameDataFolder.
-     * @param datPath Path to the source .dat file.
-     * @param onOutput Callback for streaming output.
-     * @return true on success, false otherwise.
-     */
-    [[nodiscard]] bool copyDat(const std::filesystem::path& datPath,
-                               const OutputCallback&        onOutput) const;
 
     /**
      * @brief Launches the Oni game executable.

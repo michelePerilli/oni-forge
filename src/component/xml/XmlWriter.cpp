@@ -1,8 +1,8 @@
 #include "component/xml/XmlWriter.hpp"
 #include "component/xml/XmlDocument.hpp"
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 
-XmlWriter::XmlWriter(ILogger& logger)
+XmlWriter::XmlWriter(Logger& logger)
     : m_logger(logger) {}
 
 bool XmlWriter::write(const XmlDocument& document, const std::string& filePath) const {

@@ -8,7 +8,7 @@
 
 // Forward declarations
 struct OniRepositoryRegistry;
-class ILogger;
+class Logger;
 
 /**
  * @brief Read-only catalog of vanilla Oni files.
@@ -25,7 +25,7 @@ public:
      * @param repos Reference to the repository registry for loading files.
      * @param logger Reference to the logger for diagnostic output.
      */
-    VanillaCatalogService(const OniRepositoryRegistry& repos, const ILogger& logger);
+    VanillaCatalogService(const OniRepositoryRegistry& repos, const Logger& logger);
 
     /**
      * @brief Loads all supported files from the given vanilla folder.
@@ -68,8 +68,8 @@ public:
     [[nodiscard]] std::recursive_mutex& getMutex() const override { return m_mutex; }
 
 private:
-    const OniRepositoryRegistry& m_repos;   ///< Registry of repositories for file operations.
-    const ILogger&               m_logger;  ///< Logger instance.
+    const OniRepositoryRegistry& m_repos;  ///< Registry of repositories for file operations.
+    const Logger&                m_logger; ///< Logger instance.
 
     mutable std::recursive_mutex m_mutex; ///< Mutex to protect access to file vectors.
 

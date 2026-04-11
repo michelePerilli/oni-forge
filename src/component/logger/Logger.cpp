@@ -19,7 +19,13 @@ Logger::~Logger() {
 }
 
 void Logger::info(const std::string& message) const {
+    if (m_logLevel > LogLevel::INFO) return;
     writeLog("INFO", message);
+}
+
+void Logger::debug(const std::string& message) const {
+    if (m_logLevel > LogLevel::DEBUG) return;
+    writeLog("DEBUG", message);
 }
 
 void Logger::warning(const std::string& message) const {

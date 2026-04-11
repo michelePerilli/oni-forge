@@ -1,11 +1,11 @@
 #include "repository/ONCCRepository.hpp"
 #include "model/mapping/ONCCMapping.hpp"
 
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
-ONCCRepository::ONCCRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
+ONCCRepository::ONCCRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger)
     : m_reader(reader)
     , m_writer(writer)
     , m_logger(logger) {}
@@ -60,7 +60,7 @@ std::optional<ONCC::Root> ONCCRepository::parseDocument(const XmlDocument& docum
     for (const auto& f : onccRootFields) {
         f.read(oni, root);
     }
-
+    m_logger.debug("[ONCCRepository] Parsed ONCC");
     return root;
 }
 

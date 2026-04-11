@@ -74,7 +74,7 @@ The pipeline for converting assets and launching the game runs in a dedicated ba
 
 ### Logging Specification
 
-Logging is decoupled via the `ILogger` interface. Components must inject this interface and use the following level-specific methods:
+Components must inject the Logger and use the following level-specific methods:
 
 *   **`info()`**: General application flow, successful file loads, or user-initiated actions.
 *   **`warning()`**: Non-critical issues (e.g., a missing optional XML field) that don't stop the process.

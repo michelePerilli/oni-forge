@@ -10,17 +10,17 @@
 // Forward declarations
 class XmlReader;
 class XmlWriter;
-class ILogger;
+class Logger;
 
 /**
  * @brief Responsible for reading and writing ONCV files.
  *
- * Depends on XmlReader, XmlWriter and ILogger injected via constructor.
+ * Depends on XmlReader, XmlWriter and Logger injected via constructor.
  * Knows how to map between the ONCV struct and its XML representation.
  */
 class ONCVRepository {
 public:
-    ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger);
+    ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger);
 
     /**
      * @brief Reads an ONCV file from disk and returns the parsed struct.
@@ -39,7 +39,7 @@ public:
 private:
     const XmlReader& m_reader;
     const XmlWriter& m_writer;
-    const ILogger&   m_logger;
+    const Logger&   m_logger;
 
     /**
      * @brief Parses an ONCV struct from a loaded XmlDocument.

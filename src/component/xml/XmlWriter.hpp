@@ -4,7 +4,7 @@
 
 // Forward declarations
 class XmlDocument;
-class ILogger;
+class Logger;
 
 /**
  * @brief Responsible for writing an XmlDocument to disk.
@@ -18,7 +18,7 @@ public:
      * @brief Constructs an XmlWriter with the given logger.
      * @param logger The logger to use for reporting errors and progress.
      */
-    explicit XmlWriter(ILogger& logger);
+    explicit XmlWriter(Logger& logger);
 
     /**
      * @brief Writes the given document to disk, overwriting any existing file.
@@ -29,5 +29,5 @@ public:
     [[nodiscard]] bool write(const XmlDocument& document, const std::string& filePath) const;
 
 private:
-    ILogger& m_logger;
+    Logger& m_logger;
 };

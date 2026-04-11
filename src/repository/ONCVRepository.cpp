@@ -1,11 +1,11 @@
 #include "repository/ONCVRepository.hpp"
 #include "model/mapping/ONCVMapping.hpp"
 
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
-ONCVRepository::ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
+ONCVRepository::ONCVRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger)
     : m_reader(reader)
       , m_writer(writer)
       , m_logger(logger) {
@@ -41,7 +41,7 @@ std::optional<ONCV::Root> ONCVRepository::parseDocument(const XmlDocument& docum
     for (const auto& f: oncvRootFields)
         f.read(oni.child("ONCV"), root);
 
-    m_logger.info("[ONCVRepository] Parsed ONCV: " + root.characterClass);
+    m_logger.debug("[ONCVRepository] Parsed ONCV: " + root.characterClass);
     return root;
 }
 

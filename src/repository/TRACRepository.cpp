@@ -1,11 +1,11 @@
 #include "repository/TRACRepository.hpp"
 #include "model/mapping/TRACMapping.hpp"
 
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
-TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
+TRACRepository::TRACRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger)
     : m_reader(reader)
     , m_writer(writer)
     , m_logger(logger) {}
@@ -40,7 +40,7 @@ std::optional<TRAC::Root> TRACRepository::parseDocument(const XmlDocument& docum
     for (const auto& [xmlName, write, read] : tracRootFields)
         read(oni.child("TRAC"), root);
 
-    m_logger.info("[TRACRepository] Parsed TRAC with " +
+    m_logger.debug("[TRACRepository] Parsed TRAC with " +
                   std::to_string(root.animations.size()) + " animations.");
     return root;
 }

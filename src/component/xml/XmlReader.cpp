@@ -1,8 +1,8 @@
 #include "component/xml/XmlReader.hpp"
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlDocument.hpp"
-#include "component/logger/ILogger.hpp"
 
-XmlReader::XmlReader(ILogger& logger)
+XmlReader::XmlReader(Logger& logger)
     : m_logger(logger) {}
 
 bool XmlReader::read(const std::string& filePath, XmlDocument& document) const {
@@ -11,6 +11,6 @@ bool XmlReader::read(const std::string& filePath, XmlDocument& document) const {
         return false;
     }
 
-    m_logger.info("[XmlReader] File read successfully: " + filePath);
+    m_logger.debug("[XmlReader] File read successfully: " + filePath);
     return true;
 }

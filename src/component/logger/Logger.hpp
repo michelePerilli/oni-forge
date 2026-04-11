@@ -1,6 +1,5 @@
 #pragma once
 
-#include "component/logger/ILogger.hpp"
 #include <fstream>
 #include <string>
 
@@ -10,15 +9,21 @@
  * The log file path is provided at construction time.
  * Each message is prefixed with a timestamp and a severity level.
  */
-class Logger final : public ILogger {
+class Logger final {
 public:
+    enum class LogLevel {
+        TRACE,
+        DEBUG,
+        INFO,
+    };
+
     /**
      * @brief Constructs a Logger that writes to the given file path.
      * @param filePath Absolute or relative path to the log file.
      */
     explicit Logger(const std::string& filePath);
 
-    ~Logger() override;
+    ~Logger();
 
     // Not copyable, not movable: owns a file stream
     Logger(const Logger&) = delete;
@@ -33,28 +38,30 @@ public:
      * @brief Logs an informational message.
      * @param message The message to log.
      */
-    void info(const std::string& message) const override;
+    void info(const std::string& message) const;
+
+    void debug(const std::string& message) const;
 
     /**
      * @brief Logs a warning message.
      * @param message The message to log.
      */
-    void warning(const std::string& message) const override;
+    void warning(const std::string& message) const;
 
     /**
      * @brief Logs an error message.
      * @param message The message to log.
      */
-    void error(const std::string& message) const override;
+    void error(const std::string& message) const;
 
     /**
      * @brief Logs a visual separator in the log.
      */
-    void separator() const override;
+    void separator() const;
 
 private:
     mutable std::ofstream m_fileStream;
-
+    LogLevel m_logLevel{LogLevel::INFO};
     /**
      * @brief Writes a formatted log line to both console and file.
      * @param level Severity label (e.g. "INFO", "WARNING", "ERROR").

@@ -1,7 +1,7 @@
 #include "repository/TRAMRepository.hpp"
 #include "model/mapping/TRAMMapping.hpp"
 
-#include "component/logger/ILogger.hpp"
+#include "component/logger/Logger.hpp"
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 
@@ -22,7 +22,7 @@ inline int computeFrameCount(const std::string& heightsRaw) {
     return count;
 }
 
-TRAMRepository::TRAMRepository(const XmlReader& reader, const XmlWriter& writer, const ILogger& logger)
+TRAMRepository::TRAMRepository(const XmlReader& reader, const XmlWriter& writer, const Logger& logger)
     : m_reader(reader)
     , m_writer(writer)
     , m_logger(logger) {}
@@ -42,7 +42,7 @@ std::optional<OniFile<TRAM::Root>> TRAMRepository::load(const std::string& fileP
 }
 
 bool TRAMRepository::save(const OniFile<TRAM::Root>& file) const {
-    XmlDocument document = buildDocument(file.data);
+    const XmlDocument document = buildDocument(file.data);
     return m_writer.write(document, file.path.string());
 }
 
@@ -69,7 +69,7 @@ std::optional<TRAM::Root> TRAMRepository::parseDocument(const XmlDocument& docum
 
     const bool hasImport = root.importPath.has_value();
     const bool hasData   = root.animationData.has_value();
-    m_logger.info("[TRAMRepository] Parsed TRAM - " +
+    m_logger.debug("[TRAMRepository] Parsed TRAM - " +
                   std::string(hasImport ? "DAE import" : "inline data") +
                   (hasData ? " with animation data (" + std::to_string(root.animationData->frameCount) + " frames)" : ""));
     return root;
