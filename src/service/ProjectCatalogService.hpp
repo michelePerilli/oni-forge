@@ -38,7 +38,7 @@ public:
      */
     ProjectCatalogService(const OniRepositoryRegistry& repos,
                           const IOniCatalogService&    vanilla,
-                          const Logger&               logger);
+                          const Logger&                logger);
 
     /**
      * @brief Loads all supported mod files from the specified project directory and starts the file watcher.
@@ -90,10 +90,13 @@ public:
      * These operations are thread-safe.
      * @param file Reference to the file to mark.
      */
-    void deleteFile(OniFile<ONCC::Root>& file);
-    void deleteFile(OniFile<ONCV::Root>& file);
-    void deleteFile(OniFile<TRAC::Root>& file);
-    void deleteFile(OniFile<TRAM::Root>& file);
+    void deleteFile(OniFile<ONCC::Root>& file) const;
+
+    void deleteFile(OniFile<ONCV::Root>& file) const;
+
+    void deleteFile(OniFile<TRAC::Root>& file) const;
+
+    void deleteFile(OniFile<TRAM::Root>& file) const;
 
     /**
      * @brief Creates an editable copy of a vanilla ONCC file in the project.
@@ -168,7 +171,7 @@ public:
 private:
     const OniRepositoryRegistry& m_repos;   ///< Registry containing repositories for file I/O.
     const IOniCatalogService&    m_vanilla; ///< Reference to the base game data service.
-    const Logger&               m_logger;  ///< Logger for error reporting and info messages.
+    const Logger&                m_logger;  ///< Logger for error reporting and info messages.
 
     mutable std::recursive_mutex m_mutex; ///< Mutex to protect access to file vectors.
 
@@ -215,5 +218,6 @@ private:
      * @param event The type of file system event.
      */
     template<typename T, typename Repo>
-    void handleFileEvent(std::vector<OniFile<T>>& files, const Repo& repo, const std::filesystem::path& path, filewatch::Event event);
+    void handleFileEvent(std::vector<OniFile<T>>& files, const Repo& repo, const std::filesystem::path& path,
+                         filewatch::Event         event);
 };

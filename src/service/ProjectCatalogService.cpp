@@ -231,19 +231,19 @@ void ProjectCatalogService::saveFile(OniFile<TRAM::Root>& file) {
 // Delete
 // ---------------------------------------------------------------------------
 
-void ProjectCatalogService::deleteFile(OniFile<ONCC::Root>& file) { 
+void ProjectCatalogService::deleteFile(OniFile<ONCC::Root>& file) const {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     file.status = FileStatus::Deleted; 
 }
-void ProjectCatalogService::deleteFile(OniFile<ONCV::Root>& file) { 
+void ProjectCatalogService::deleteFile(OniFile<ONCV::Root>& file) const {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     file.status = FileStatus::Deleted; 
 }
-void ProjectCatalogService::deleteFile(OniFile<TRAC::Root>& file) { 
+void ProjectCatalogService::deleteFile(OniFile<TRAC::Root>& file) const {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     file.status = FileStatus::Deleted; 
 }
-void ProjectCatalogService::deleteFile(OniFile<TRAM::Root>& file) { 
+void ProjectCatalogService::deleteFile(OniFile<TRAM::Root>& file) const {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     file.status = FileStatus::Deleted; 
 }
