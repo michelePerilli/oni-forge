@@ -4,10 +4,10 @@
 #include "component/xml/XmlReader.hpp"
 #include "component/xml/XmlWriter.hpp"
 #include "gui/OniGuiRenderer.hpp"
-#include "gui/views/AddFileModal.hpp"
+#include "gui/modals/AddFileModal.hpp"
+#include "gui/modals/SettingsModal.hpp"
 #include "gui/views/ONCCView.hpp"
 #include "gui/views/ONCVView.hpp"
-#include "gui/views/SettingsModal.hpp"
 #include "gui/views/TRACView.hpp"
 #include "gui/views/TRAMView.hpp"
 #include "model/Config.hpp"
@@ -20,11 +20,11 @@
 #include "service/ProjectCatalogService.hpp"
 #include "service/VanillaCatalogService.hpp"
 
-#include <string>
-#include <vector>
-#include <thread>
 #include <atomic>
 #include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 /**
  * @brief Main application class for OniForge.

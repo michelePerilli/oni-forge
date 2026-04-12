@@ -1,4 +1,4 @@
-#include "gui/views/SettingsModal.hpp"
+#include "gui/modals/SettingsModal.hpp"
 #include <imgui.h>
 
 namespace OniForge {

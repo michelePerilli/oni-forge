@@ -3,7 +3,8 @@
 #include "component/logger/Logger.hpp"
 
 XmlWriter::XmlWriter(Logger& logger)
-    : m_logger(logger) {}
+    : m_logger(logger) {
+}
 
 bool XmlWriter::write(const XmlDocument& document, const std::string& filePath) const {
     if (!document.isLoaded()) {

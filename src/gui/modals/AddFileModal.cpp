@@ -1,4 +1,4 @@
-#include "gui/views/AddFileModal.hpp"
+#include "gui/modals/AddFileModal.hpp"
 
 #include <imgui.h>
 

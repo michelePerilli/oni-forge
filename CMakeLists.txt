@@ -77,8 +77,8 @@ set(SOURCES
         src/gui/views/ONCVView.cpp
         src/gui/views/TRACView.cpp
         src/gui/views/TRAMView.cpp
-        src/gui/views/AddFileModal.cpp
-        src/gui/views/SettingsModal.cpp
+        src/gui/modals/AddFileModal.cpp
+        src/gui/modals/SettingsModal.cpp
         src/component/logger/Logger.cpp
         src/component/xml/XmlDocument.cpp
         src/component/xml/XmlReader.cpp

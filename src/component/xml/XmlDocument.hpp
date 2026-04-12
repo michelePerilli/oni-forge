@@ -76,6 +76,6 @@ public:
 
 private:
     pugi::xml_document m_document;
-    bool m_loaded = false;
-    std::string m_lastError;
+    bool               m_loaded = false;
+    std::string        m_lastError;
 };

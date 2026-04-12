@@ -3,11 +3,12 @@
 #include "component/xml/XmlDocument.hpp"
 
 XmlReader::XmlReader(Logger& logger)
-    : m_logger(logger) {}
+    : m_logger(logger) {
+}
 
 bool XmlReader::read(const std::string& filePath, XmlDocument& document) const {
     if (!document.loadFromFile(filePath)) {
-        m_logger.error("[XmlReader] Failed to read file: " + filePath + " — " + document.getLastError());
+        m_logger.error("[XmlReader] Failed to read file: " + filePath + " - " + document.getLastError());
         return false;
     }
 
